@@ -1,0 +1,11 @@
+name: 'Sync with registry'
+description: 'Synchronize monorepo with registry'
+inputs:
+  monorepo_url:
+    description: 'Git URL with monorepo'
+    required: true
+runs:
+  using: 'docker'
+  image: 'docker://runiverse/sync'
+  args:
+    - ${{ inputs.monorepo_url }}
