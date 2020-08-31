@@ -17,7 +17,11 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   sys::exec_wait("git", c("submodule", "update", "--init", "--remote", '.registry'))
   gert::git_reset_hard('origin/HEAD', repo = I('.registry'))
   jsonfile <- sprintf('.registry/%s.json', basename(monorepo_url))
-  registry <- jsonlite::read_json(jsonfile)
+  registry <- if(file.exists(jsonfile)){
+    jsonlite::read_json(jsonfile)
+  } else {
+    jsonlite::read_json('.registry/packages.json')
+  }
   registry_url <- gert::git_remote_list(repo = I('.registry'))$url
   generate_gitmodules(pkgs = registry, registry_url = registry_url)
   registry_commit <- gert::git_log(repo = I('.registry'), max = 1)
