@@ -56,6 +56,10 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   lapply(registry, function(x){
     pkg_dir <- x$package
     pkg_url <- x$url
+    if(isFALSE(x$available)){
+      print_message("Skipping unavailable package %s", pkg_dir)
+      return()
+    }
     submodule <- sys::exec_internal("git", c("submodule", "status", pkg_dir), error = FALSE)
     if(submodule$status == 0){
       branch <- ifelse(length(x$branch) > 0, x$branch, 'HEAD')
