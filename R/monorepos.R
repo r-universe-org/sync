@@ -28,7 +28,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   gert::git_add(c('.registry', '.gitmodules'))
   if(any(gert::git_status()$staged)){
     print_message("Sync registry with upstream")
-    commit_as_bot(message = "Sync registry", registry_commit$author)
+    gert::git_commit(message = "Sync registry", registry_commit$author)
     gert::git_push()
   } else {
     print_message("Registry is up-to-date")
@@ -44,7 +44,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
       unlink(pkg_dir, recursive = TRUE)
     })
     msg <- paste("Deleting packages:", paste0(remove_packages, collapse = ', '))
-    commit_as_bot(msg, registry_commit$author)
+    gert::git_commit(msg, 'Bot <bot@nowhere')
     gert::git_push()
   }
 
@@ -80,26 +80,17 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
     if(!any(gert::git_status()$staged)){
       print_message("Submodule '%s' already up-to-date", pkg_dir)
     } else {
-      package <- read.dcf(file.path(pkg_dir, 'DESCRIPTION'))[[1,'Package']]
-      version <- read.dcf(file.path(pkg_dir, 'DESCRIPTION'))[[1,'Version']]
+      desc <- as.data.frame(read.dcf(file.path(pkg_dir, 'DESCRIPTION')))
+      package <- desc$Package
+      version <- desc$Version
+      maintainer <- get_description_maintainer(pkg_dir)
       subrepo <- gert::git_open(pkg_dir)
       stopifnot(basename(gert::git_info(repo = subrepo)$path) == pkg_dir)
-      commit <- gert::git_log(repo = subrepo, max = 1)
-      commit_as_bot(message = paste(package, version), commit$author)
+      gert::git_commit(message = paste(package, version), maintainer)
       gert::git_push()
     }
   })
   invisible(packages)
-}
-
-commit_as_bot <- function(message, author = NULL){
-  commit_sig <- gert::git_signature(name = 'rOpenSci', email = 'info@ropensci.org')
-  author_sig <- if(length(author)){
-    author_name <- sub('^(.*)<(.*)>$', '\\1', author)
-    author_email <- sub('^(.*)<(.*)>$', '\\2', author)
-    gert::git_signature(name = author_name, email = author_email)
-  } else {commit_sig}
-  gert::git_commit(message = message, author = author_sig, committer = commit_sig)
 }
 
 print_message <- function(...){
@@ -123,4 +114,14 @@ generate_gitmodules <- function(pkgs, registry_url){
     return(str)
   }, character(1))
   writeLines(lines, '.gitmodules')
+}
+
+get_description_maintainer <- function(pkg_dir){
+  path <- file.path(pkg_dir, 'DESCRIPTION')
+  desc <- tools:::.read_description(path)
+  extra <- tools:::.expand_package_description_db_R_fields(desc)
+  out <- as.list(c(desc, extra))$Maintainer
+  if(!length(out))
+    stop("Failed to extract maintainer from description: ", pkg_dir)
+  return(out)
 }
