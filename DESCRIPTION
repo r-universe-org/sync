@@ -7,7 +7,7 @@ Authors@R: person("Jeroen", "Ooms", ,"jeroen@berkeley.edu",
 Description: Retrieves the latest registry and updates all the submodules.
 Encoding: UTF-8
 LazyData: true
-Imports: 
+Imports:
     sys,
     jsonlite,
     gert (>= 0.3.9000)

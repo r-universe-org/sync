@@ -44,7 +44,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
       unlink(pkg_dir, recursive = TRUE)
     })
     msg <- paste("Deleting packages:", paste0(remove_packages, collapse = ', '))
-    gert::git_commit(msg, 'Bot <bot@nowhere')
+    gert::git_commit(msg, registry_commit$author)
     gert::git_push()
   }
 
@@ -80,13 +80,12 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
     if(!any(gert::git_status()$staged)){
       print_message("Submodule '%s' already up-to-date", pkg_dir)
     } else {
-      desc <- as.data.frame(read.dcf(file.path(pkg_dir, 'DESCRIPTION')))
-      package <- desc$Package
-      version <- desc$Version
-      maintainer <- get_description_maintainer(pkg_dir)
+      desc <- get_description_data(pkg_dir)
       subrepo <- gert::git_open(pkg_dir)
       stopifnot(basename(gert::git_info(repo = subrepo)$path) == pkg_dir)
-      gert::git_commit(message = paste(package, version), maintainer)
+      pkg_commit <- gert::git_log(repo = subrepo, max = 1)
+      sig <- paste(trimws(desc$maintainer), unclass(pkg_commit$time))
+      gert::git_commit(message = paste(desc$package, desc$version), sig = sig)
       gert::git_push()
     }
   })
@@ -116,12 +115,13 @@ generate_gitmodules <- function(pkgs, registry_url){
   writeLines(lines, '.gitmodules')
 }
 
-get_description_maintainer <- function(pkg_dir){
+get_description_data <- function(pkg_dir){
   path <- file.path(pkg_dir, 'DESCRIPTION')
   desc <- tools:::.read_description(path)
   extra <- tools:::.expand_package_description_db_R_fields(desc)
-  out <- as.list(c(desc, extra))$Maintainer
-  if(!length(out))
+  out <- as.list(c(desc, extra))
+  names(out) <- tolower(names(out))
+  if(!length(out$maintainer))
     stop("Failed to extract maintainer from description: ", pkg_dir)
   return(out)
 }
