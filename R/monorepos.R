@@ -85,7 +85,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
       stopifnot(basename(gert::git_info(repo = subrepo)$path) == pkg_dir)
       pkg_commit <- gert::git_log(repo = subrepo, max = 1)
       sig <- paste(trimws(desc$maintainer), unclass(pkg_commit$time))
-      gert::git_commit(message = paste(desc$package, desc$version), sig = sig)
+      gert::git_commit(message = paste(desc$package, desc$version), author = sig)
       gert::git_push()
     }
   })
