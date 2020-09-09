@@ -25,12 +25,14 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   registry_url <- gert::git_remote_list(repo = I('.registry'))$url
   generate_gitmodules(pkgs = registry, registry_url = registry_url)
   registry_commit <- gert::git_log(repo = I('.registry'), max = 1)
-  gert::git_add(c('.registry', '.gitmodules'))
+  gert::git_add('.gitmodules')
   if(any(gert::git_status()$staged)){
     print_message("Sync registry with upstream")
+    gert::git_add('.registry')
     gert::git_commit(message = "Sync registry", registry_commit$author)
     gert::git_push()
   } else {
+    gert::git_reset_hard('HEAD', repo = I('.registry'))
     print_message("Registry is up-to-date")
   }
 
