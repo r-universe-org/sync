@@ -13,6 +13,22 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   on.exit(setwd(pwd))
   setwd(repo)
 
+  # Sync the workflow files
+  workflows <- tempfile()
+  gert::git_clone('https://github.com/r-universe-org/workflows', workflows)
+  workflow_commit <- gert::git_log(repo = I(workflows), max = 1)
+  infiles <- list.files(workflows, full.names = TRUE)
+  destfiles <- file.path('.github/workflows', basename(infiles))
+  unlink(".github/workflows/*")
+  file.copy(infiles, destfiles)
+  gert::git_add(".github")
+  if(any(gert::git_status()$staged)){
+    gert::git_commit(message = "Updating GHA workflow scripts", workflow_commit$author)
+    gert::git_push()
+  } else {
+    print_message("GHA workflows are up-to-date")
+  }
+
   # Sync with the user registry file
   sys::exec_wait("git", c("submodule", "update", "--init", "--remote", '.registry'))
   gert::git_reset_hard('origin/HEAD', repo = I('.registry'))
