@@ -32,7 +32,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   # Sync with the user registry file
   sys::exec_wait("git", c("submodule", "update", "--init", "--remote", '.registry'))
   gert::git_reset_hard('origin/HEAD', repo = I('.registry'))
-  jsonfile <- sprintf('.registry/%s.json', basename(monorepo_url))
+  jsonfile <- sprintf('.registry/%s.json', sub("_", "@", basename(monorepo_url)))
   registry <- if(file.exists(jsonfile)){
     jsonlite::read_json(jsonfile)
   } else {
