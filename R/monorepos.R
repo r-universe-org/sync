@@ -114,7 +114,7 @@ update_one_package <- function(x, update_pkg_remotes = FALSE){
 }
 
 update_remotes_json <- function(desc){
-  new_remotes <- get_package_remotes(desc)
+  new_remotes <- get_all_remotes(desc)
   other_remotes <- Filter(function(x){
     (x$from != desc$package)
   }, read_remotes_list())
@@ -128,23 +128,50 @@ update_remotes_json <- function(desc){
   }
 }
 
-# TODO: download description to check availability and recursive remotes
-get_package_remotes <- function(desc){
+
+get_all_remotes <- function(desc){
+  out <- get_recursive_remotes(desc)
+  lapply(out, function(x){
+    x$from = desc$package
+    x$via <- I(x$via)
+    return(x)
+  })
+}
+
+# Recursively download description files and get remotes.
+# Skip already known packages to prevent infinite recursion.
+get_recursive_remotes <- function(desc, via = NULL){
+  via <- c(via, desc$package)
   if(!length(desc$remotes) || !nchar(desc$remotes))
     return(NULL)
   remotes_repos <- trimws(strsplit(desc$remotes, ',')[[1]])
-  lapply(remotes_repos, function(x){
+  all_lists <- lapply(remotes_repos, function(x){
     info <- remotes::parse_repo_spec(x)
+    if(info$repo %in% via)
+      return(NULL)
     out <- list(
       package = info$repo,
       url = sprintf("https://github.com/%s/%s", info$username, info$repo),
-      from = desc$package
+      via = via
     )
     if(length(info$ref) && nchar(info$ref)){
       out$branch = info$ref
     }
-    return(out)
+    sub_remotes <- get_recursive_remotes(get_github_description(info), via = via)
+    c(list(out), sub_remotes)
   })
+  do.call(c, all_lists)
+}
+
+get_github_description <- function(x){
+  branch <- ifelse(length(x$branch) > 0, x$branch, 'HEAD')
+  url <- sprintf("https://raw.githubusercontent.com/%s/%s/%s/DESCRIPTION",
+                 x$username, x$repo, branch)
+  tmp <- tempfile()
+  on.exit(unlink(tmp))
+  print_message(paste("Looking for remotes in:", url))
+  curl::curl_download(url, tmp)
+  read_description_file(tmp)
 }
 
 read_remotes_list <- function(){
@@ -190,11 +217,16 @@ update_gitmodules <- function(){
 
 get_description_data <- function(pkg_dir){
   path <- file.path(pkg_dir, 'DESCRIPTION')
+  out <- read_description_file(path)
+  if(!length(out$maintainer))
+    stop("Failed to extract maintainer from description: ", pkg_dir)
+  return(out)
+}
+
+read_description_file <- function(path){
   desc <- tools:::.read_description(path)
   extra <- tools:::.expand_package_description_db_R_fields(desc)
   out <- as.list(c(desc, extra))
   names(out) <- tolower(names(out))
-  if(!length(out$maintainer))
-    stop("Failed to extract maintainer from description: ", pkg_dir)
   return(out)
 }
