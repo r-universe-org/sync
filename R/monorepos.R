@@ -47,7 +47,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
 
   # First update all packages from the registry
   registry <- read_registry_list()
-  lapply(registry, update_one_package)
+  lapply(registry, update_one_package, update_pkg_remotes = TRUE)
 
   # Now update all remotes (possibly new ones from package updates)
   remotes <- read_remotes_list()
@@ -71,7 +71,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
 }
 
 # Sync the registry packages with the monorepo
-update_one_package <- function(x){
+update_one_package <- function(x, update_pkg_remotes = FALSE){
   pkg_dir <- x$package
   pkg_url <- x$url
   if(isFALSE(x$available)){
@@ -99,9 +99,11 @@ update_one_package <- function(x){
     print_message("Submodule '%s' already up-to-date", pkg_dir)
   } else {
     desc <- get_description_data(pkg_dir)
-    update_remotes_json(desc)
-    update_gitmodules()
-    gert::git_add(c('.remotes.json', '.gitmodules'))
+    if(isTRUE(update_pkg_remotes)){
+      update_remotes_json(desc)
+      update_gitmodules()
+      gert::git_add(c('.remotes.json', '.gitmodules'))
+    }
     subrepo <- gert::git_open(pkg_dir)
     stopifnot(basename(gert::git_info(repo = subrepo)$path) == pkg_dir)
     pkg_commit <- gert::git_log(repo = subrepo, max = 1)
