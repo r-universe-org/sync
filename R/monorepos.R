@@ -120,8 +120,10 @@ update_remotes_json <- function(desc){
   }, read_remotes_list())
   all_remotes <- c(other_remotes, new_remotes)
   if(length(all_remotes)){
-    pkg_names <- vapply(all_remotes, function(x){x$package}, character(1))
-    jsonlite::write_json(all_remotes[order(pkg_names)], '.remotes.json',
+    sort_key <- vapply(all_remotes, function(x){
+      paste0(x$package, '-', x$from)
+    }, character(1))
+    jsonlite::write_json(all_remotes[order(sort_key)], '.remotes.json',
                          auto_unbox = TRUE, pretty = TRUE)
   } else {
     unlink('.remotes.json')
@@ -176,7 +178,7 @@ get_github_description <- function(x){
 
 read_remotes_list <- function(){
   if(file.exists('.remotes.json'))
-    jsonlite::read_json('.remotes.json')
+    jsonlite::read_json('.remotes.json', simplifyVector = TRUE, simplifyDataFrame = FALSE)
 }
 
 print_message <- function(...){
