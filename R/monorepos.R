@@ -115,18 +115,20 @@ update_one_package <- function(x, update_pkg_remotes = FALSE){
 
 update_remotes_json <- function(desc){
   new_remotes <- get_all_remotes(desc)
-  other_remotes <- Filter(function(x){
-    (x$from != desc$package)
-  }, read_remotes_list())
-  all_remotes <- c(other_remotes, new_remotes)
-  if(length(all_remotes)){
-    sort_key <- vapply(all_remotes, function(x){
-      paste0(x$package, '-', x$from)
-    }, character(1))
-    jsonlite::write_json(all_remotes[order(sort_key)], '.remotes.json',
-                         auto_unbox = TRUE, pretty = TRUE)
-  } else {
-    unlink('.remotes.json')
+  old_remotes <- read_remotes_list()
+  cur_remotes <- vapply(old_remotes, function(x){x$from == desc$package}, logical(1))
+  if(any(cur_remotes) || length(new_remotes)){
+    other_remotes <- old_remotes[!cur_remotes]
+    all_remotes <- c(other_remotes, new_remotes)
+    if(length(all_remotes)){
+      sort_key <- vapply(all_remotes, function(x){
+        paste0(x$package, '-', x$from)
+      }, character(1))
+      jsonlite::write_json(all_remotes[order(sort_key)], '.remotes.json',
+                           auto_unbox = TRUE, pretty = TRUE)
+    } else {
+      unlink('.remotes.json')
+    }
   }
 }
 
