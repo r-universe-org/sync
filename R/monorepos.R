@@ -165,6 +165,9 @@ get_recursive_remotes <- function(desc, via = NULL){
     if(length(info$ref) && nchar(info$ref)){
       out$branch = info$ref
     }
+    if(length(info$subdir) && nchar(info$subdir)){
+      out$subdir = info$subdir
+    }
     sub_remotes <- get_recursive_remotes(get_github_description(info), via = via)
     c(list(out), sub_remotes)
   })
