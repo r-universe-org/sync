@@ -124,8 +124,11 @@ update_remotes_json <- function(desc){
       sort_key <- vapply(all_remotes, function(x){
         paste0(x$package, '-', x$from)
       }, character(1))
-      jsonlite::write_json(all_remotes[order(sort_key)], '.remotes.json',
-                           auto_unbox = TRUE, pretty = TRUE)
+      all_remotes <- lapply(all_remotes[order(sort_key)], function(x){
+        x$via = I(x$via)
+        return(x)
+      })
+      jsonlite::write_json(all_remotes, '.remotes.json', auto_unbox = TRUE, pretty = TRUE)
     } else {
       unlink('.remotes.json')
     }
