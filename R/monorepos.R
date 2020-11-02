@@ -98,7 +98,8 @@ update_one_package <- function(x, update_pkg_remotes = FALSE){
   if(!any(gert::git_status()$staged)){
     print_message("Submodule '%s' already up-to-date", pkg_dir)
   } else {
-    desc <- get_description_data(pkg_dir)
+    r_pkg_dir <- ifelse(length(x$subdir) > 0, file.path(pkg_dir, x$subdir), pkg_dir)
+    desc <- get_description_data(r_pkg_dir)
     if(isTRUE(update_pkg_remotes)){
       update_remotes_json(desc)
       update_gitmodules()
@@ -172,8 +173,9 @@ get_recursive_remotes <- function(desc, via = NULL){
 
 get_github_description <- function(x){
   branch <- ifelse(length(x$branch) > 0, x$branch, 'HEAD')
-  url <- sprintf("https://raw.githubusercontent.com/%s/%s/%s/DESCRIPTION",
-                 x$username, x$repo, branch)
+  filename <- ifelse(length(x$subdir) > 0, paste0(x$subdir, '/DESCRIPTION'), 'DESCRIPTION')
+  url <- sprintf("https://raw.githubusercontent.com/%s/%s/%s/%s",
+                 x$username, x$repo, branch, filename)
   tmp <- tempfile()
   on.exit(unlink(tmp))
   print_message(paste("Looking for remotes in:", url))
