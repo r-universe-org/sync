@@ -214,6 +214,8 @@ update_gitmodules <- function(){
             x$package, x$package, x$url)
     if(length(x$branch))
       str <- paste0(str, '\n\tbranch = ', x$branch)
+    if(length(x$subdir))
+      str <- paste0(str, '\n\tsubdir = ', x$subdir)
     return(str)
   }, character(1))
   writeLines(lines, '.gitmodules')
