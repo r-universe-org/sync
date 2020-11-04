@@ -50,8 +50,15 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   lapply(registry, update_one_package, update_pkg_remotes = TRUE)
 
   # Now update all remotes (possibly new ones from package updates)
+  # Filter out packages that already exist in the main package registry
   remotes <- read_remotes_list()
-  lapply(remotes, update_one_package)
+  registry_pkgs <- vapply(registry, function(x){x$package}, character(1))
+  remotes <- Filter(function(x){is.na(match(x$package, registry_pkgs))}, remotes)
+
+  # Filter duplicates
+  remotes_pkgs <- vapply(remotes, function(x){x$package}, character(1))
+  remotes_dups <- duplicated(remotes_pkgs)
+  lapply(remotes[!remotes_dups], update_one_package)
 
   # Finally get rid of deleted packages
   packages <- vapply(c(registry, remotes), function(x){x$package}, character(1))
