@@ -8,6 +8,7 @@ Description: Retrieves the latest registry and updates all the submodules.
 Encoding: UTF-8
 LazyData: true
 Imports:
+    curl,
     sys,
     jsonlite,
     gert,
