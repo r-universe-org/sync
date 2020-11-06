@@ -220,6 +220,8 @@ update_gitmodules <- function(){
     package = '.registry',
     url = registry_url
   )), registry, remotes)
+  pkgs_names <- vapply(pkgs, function(x){x$package}, character(1))
+  pkgs <- pkgs[!duplicated(pkgs_names)]
   lines <- vapply(pkgs, function(x){
     if(!length(x$package))
       stop("Field 'package' missing from registry entry")
