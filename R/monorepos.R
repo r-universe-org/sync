@@ -26,7 +26,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
     changed_files <- paste(gert::git_status(staged = TRUE)$file, collapse = ', ')
     print_message("Committing changes for: %s", changed_files)
     gert::git_commit(message = "Updating GHA workflow scripts", workflow_commit$author)
-    gert::git_push()
+    gert::git_push(verbose = TRUE)
   } else {
     print_message("GHA workflows are up-to-date")
   }
@@ -41,7 +41,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
     print_message("Sync registry with upstream")
     gert::git_add('.registry')
     gert::git_commit(message = "Sync registry", registry_commit$author)
-    gert::git_push()
+    gert::git_push(verbose = TRUE)
   } else {
     gert::git_reset_hard('HEAD', repo = I('.registry'))
     print_message("Registry is up-to-date")
@@ -73,7 +73,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
     })
     msg <- paste("Deleting packages:", paste0(remove_packages, collapse = ', '))
     gert::git_commit(msg, registry_commit$author)
-    gert::git_push()
+    gert::git_push(verbose = TRUE)
   } else {
     print_message("No packages to delete. Everything is up-to-date")
   }
@@ -83,14 +83,14 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
 update_one_package <- function(x, update_pkg_remotes = FALSE){
   pkg_dir <- x$package
   pkg_url <- x$url
+  pkg_branch <- ifelse(length(x$branch), x$branch, 'HEAD')
   if(isFALSE(x$available)){
     print_message("Skipping unavailable package %s", pkg_dir)
     return()
   }
   submodule <- sys::exec_internal("git", c("submodule", "status", pkg_dir), error = FALSE)
   if(submodule$status == 0){
-    branch <- ifelse(length(x$branch) > 0, x$branch, 'HEAD')
-    out <- sys::exec_internal('git', c("ls-remote", pkg_url, branch))
+    out <- sys::exec_internal('git', c("ls-remote", pkg_url, pkg_branch))
     remote_head <- strsplit(sys::as_text(out$stdout), '\\W')[[1]][1]
     if(grepl(remote_head, sys::as_text(submodule$stdout), fixed = TRUE)){
       print_message("Submodule %s unchanged (%s)", pkg_dir, remote_head)
@@ -119,7 +119,7 @@ update_one_package <- function(x, update_pkg_remotes = FALSE){
     pkg_commit <- gert::git_log(repo = subrepo, max = 1)
     sig <- paste(trimws(desc$maintainer), unclass(pkg_commit$time))
     gert::git_commit(message = paste(desc$package, desc$version), author = sig)
-    gert::git_push()
+    gert::git_push(verbose = TRUE)
   }
 }
 
