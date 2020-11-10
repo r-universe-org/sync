@@ -23,7 +23,8 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   file.copy(infiles, destfiles)
   gert::git_add(".github")
   if(any(gert::git_status()$staged)){
-    print_message("Committing changes for: %s", paste(git_status(staged = TRUE)$file, collapse = ', '))
+    changed_files <- paste(gert::git_status(staged = TRUE)$file, collapse = ', ')
+    print_message("Committing changes for: %s", changed_files)
     gert::git_commit(message = "Updating GHA workflow scripts", workflow_commit$author)
     gert::git_push()
   } else {
