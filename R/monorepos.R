@@ -233,7 +233,8 @@ update_gitmodules <- function(){
   registry_url <- gert::git_remote_list(repo = I('.registry'))$url
   pkgs <- c(list(list(
     package = '.registry',
-    url = registry_url
+    url = registry_url,
+    branch = 'HEAD' #git assumes 'master' otherwise!
   )), registry, remotes)
   pkgs_names <- vapply(pkgs, function(x){x$package}, character(1))
   pkgs <- pkgs[!duplicated(pkgs_names)]
