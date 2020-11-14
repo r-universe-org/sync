@@ -90,13 +90,18 @@ update_one_package <- function(x, update_pkg_remotes = FALSE){
   }
   submodule <- sys::exec_internal("git", c("submodule", "status", pkg_dir), error = FALSE)
   if(submodule$status == 0){
+    submodule_head <- sub("^[+-]", "", sys::as_text(submodule$stdout))
     out <- sys::exec_internal('git', c("ls-remote", pkg_url, pkg_branch))
     if(!length(out$stdout)){
-      print_message("No such branch '%s' for package '%s'. Skipping...", pkg_branch, pkg_dir)
+      if(grepl(paste0("^", pkg_branch), submodule_head)){
+        print_message("Package '%s' already at commit '%s'", pkg_dir, pkg_branch)
+      } else {
+        print_message("No such branch '%s' for package '%s'. Skipping...", pkg_branch, pkg_dir)
+      }
       return()
     }
     remote_head <- strsplit(sys::as_text(out$stdout), '\\W')[[1]][1]
-    if(grepl(remote_head, sys::as_text(submodule$stdout), fixed = TRUE)){
+    if(grepl(remote_head, submodule_head, fixed = TRUE)){
       print_message("Submodule %s unchanged (%s)", pkg_dir, remote_head)
       return()
     }
