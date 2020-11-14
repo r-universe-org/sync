@@ -89,12 +89,17 @@ update_one_package <- function(x, update_pkg_remotes = FALSE){
     return()
   }
   submodule <- sys::exec_internal("git", c("submodule", "status", pkg_dir), error = FALSE)
+  if(submodule$status != 0){
+    print_message("Adding new package '%s' from: %s", pkg_dir, pkg_url)
+    sys::exec_wait("git", c("submodule", "add", "--force", pkg_url, pkg_dir))
+    submodule <- sys::exec_internal("git", c("submodule", "status", pkg_dir), error = FALSE)
+  }
   if(submodule$status == 0){
     submodule_head <- sub("^[+-]", "", sys::as_text(submodule$stdout))
     out <- sys::exec_internal('git', c("ls-remote", pkg_url, pkg_branch))
     if(!length(out$stdout)){
       if(grepl(paste0("^", pkg_branch), submodule_head)){
-        print_message("Package '%s' already at commit '%s'", pkg_dir, pkg_branch)
+        print_message("Package '%s' already at commit '%s'", pkg_dir, submodule_head)
       } else {
         print_message("No such branch '%s' for package '%s'. Skipping...", pkg_branch, pkg_dir)
       }
@@ -109,8 +114,7 @@ update_one_package <- function(x, update_pkg_remotes = FALSE){
     sys::exec_wait("git", c("update-index", "--cacheinfo", "160000", remote_head, pkg_dir))
     sys::exec_wait("git", c("submodule", "update", "--init", pkg_dir))
   } else {
-    print_message("Adding new package '%s' from: %s", pkg_dir, pkg_url)
-    sys::exec_wait("git", c("submodule", "add", "--force", pkg_url, pkg_dir))
+    print_message("FAILED to init submodule %s", pkg_dir)
   }
   gert::git_add(pkg_dir)
   if(!any(gert::git_status()$staged)){
