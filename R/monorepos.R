@@ -235,8 +235,8 @@ update_gitmodules <- function(){
       stop("Field 'url' missing from registry entry")
     str <- sprintf('[submodule "%s"]\n\tpath = %s\n\turl = %s\n\tshallow = true',
             x$package, x$package, x$url)
-    branch <- ifelse(length(x$branch), x$branch, 'HEAD')
-    str <- paste0(str, '\n\tbranch = ', branch)
+    if(length(x$branch))
+      str <- paste0(str, '\n\tbranch = ', x$branch)
     if(length(x$subdir))
       str <- paste0(str, '\n\tsubdir = ', x$subdir)
     return(str)
