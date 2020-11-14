@@ -101,12 +101,12 @@ update_one_package <- function(x, update_pkg_remotes = FALSE){
       return()
     }
     print_message("Updating package '%s' from: %s", pkg_dir, pkg_url)
-    sys::exec_wait("git", c("submodule", "update", "--init", "--remote", pkg_dir))
+    sys::exec_wait("git", c("update-index", "--cacheinfo", "160000", remote_head, pkg_dir))
+    sys::exec_wait("git", c("submodule", "update", "--init", pkg_dir))
   } else {
     print_message("Adding new package '%s' from: %s", pkg_dir, pkg_url)
     sys::exec_wait("git", c("submodule", "add", "--force", pkg_url, pkg_dir))
   }
-  gert::git_reset_hard('origin/HEAD', repo = I(pkg_dir))
   gert::git_add(pkg_dir)
   if(!any(gert::git_status()$staged)){
     print_message("Submodule '%s' already up-to-date", pkg_dir)
