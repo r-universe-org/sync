@@ -106,7 +106,7 @@ update_one_package <- function(x, update_pkg_remotes = FALSE){
       return()
     }
     remote_head <- strsplit(sys::as_text(out$stdout), '\\W')[[1]][1]
-    if(grepl(remote_head, submodule_head, fixed = TRUE)){
+    if(!(pkg_dir %in% gert::git_status()$file) && grepl(remote_head, submodule_head, fixed = TRUE)){
       print_message("Submodule %s unchanged (%s)", pkg_dir, remote_head)
       return()
     }
