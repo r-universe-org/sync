@@ -24,6 +24,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
     }, error = function(e){
       unlink('.ghapp')
       print_message("Did not find an app installation for: %s", monorepo_name)
+      print(e)
     })
     gert::git_add('.ghapp')
   } else {
