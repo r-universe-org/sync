@@ -6,12 +6,29 @@
 #' @param monorepo_url full git URL of monorepo
 sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   # Clone and cd into the monorepo
-  repo <- file.path(tempdir(), paste0(basename(monorepo_url), '-universe'))
+  monorepo_url <- sub("\\.git$", "", monorepo_url)
+  monorepo_name <- basename(monorepo_url)
+  repo <- file.path(tempdir(), paste0(monorepo_name, '-universe'))
   unlink(repo, recursive = TRUE)
   gert::git_clone(monorepo_url, path = repo)
   pwd <- getwd()
   on.exit(setwd(pwd))
   setwd(repo)
+
+  # Test if we have an app
+  if(nchar(Sys.getenv('GH_APP_KEY'))){
+    tryCatch({
+      out <- gh_app_installation_info(monorepo_name)
+      ghapp <- out[c('id', 'created_at', 'repository_selection', 'permissions')]
+      jsonlite::write_json(ghapp, '.ghapp', pretty = TRUE, auto_unbox = TRUE)
+    }, error = function(e){
+      unlink('.ghapp')
+      print_message("Did not find an app installation for: %s", monorepo_name)
+    })
+    gert::git_add('.ghapp')
+  } else {
+    print_message("No GH_APP_KEY found, skipping app checks")
+  }
 
   # Sync the workflow files
   workflows <- tempfile()
