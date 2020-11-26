@@ -18,12 +18,14 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   # Test if we have an app
   if(nchar(Sys.getenv('GH_APP_KEY'))){
     tryCatch({
-      out <- gh_app_installation_info(monorepo_name)
+      out <- ghapps::gh_app_installation_info(monorepo_name)
       ghapp <- out[c('id', 'created_at', 'repository_selection', 'permissions')]
       jsonlite::write_json(ghapp, '.ghapp', pretty = TRUE, auto_unbox = TRUE)
-    }, error = function(e){
+    }, http_error_404 = function(e){
       unlink('.ghapp')
       print_message("Did not find an app installation for: %s", monorepo_name)
+    }, error = function(e){
+      print_message("Error checking for app installation for: %s", monorepo_name)
       print(e)
     })
     gert::git_add('.ghapp')
