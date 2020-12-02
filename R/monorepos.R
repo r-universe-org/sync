@@ -243,6 +243,7 @@ read_registry_list <- function(){
   if(file.exists(jsonfile)){
     jsonlite::read_json(jsonfile)
   } else {
+    stopifnot("packages.json does not exist" = file.exists('.registry/packages.json'))
     jsonlite::read_json('.registry/packages.json')
   }
 }
