@@ -150,7 +150,8 @@ update_one_package <- function(x, update_pkg_remotes = FALSE){
     subrepo <- gert::git_open(pkg_dir)
     stopifnot(basename(gert::git_info(repo = subrepo)$path) == pkg_dir)
     pkg_commit <- gert::git_log(repo = subrepo, max = 1)
-    sig <- paste(trimws(desc$maintainer), unclass(pkg_commit$time))
+    person <- as.person(desc$maintainer)[1]
+    sig <- paste(format(person, include = c("given", "family", "email")), unclass(pkg_commit$time))
     gert::git_commit(message = paste(desc$package, desc$version), author = sig)
     gert::git_push(verbose = TRUE)
   }
