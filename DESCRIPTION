@@ -11,9 +11,11 @@ Imports:
     curl,
     sys,
     jsonlite,
-    gert,
+    gert (>= 1.0.9000),
     ghapps,
     remotes
-Remotes: jeroen/ghapps
+Remotes: 
+    jeroen/ghapps,
+    r-lib/gert
 RoxygenNote: 7.1.1
 License: Apache License 2.0

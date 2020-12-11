@@ -1,4 +1,4 @@
-FROM rhub/r-minimal:4.0.1
+FROM rhub/r-minimal
 
 RUN installr -d -t "bash openssl-dev libgit2-dev" -a "openssl libgit2 git" gert gh remotes
 
