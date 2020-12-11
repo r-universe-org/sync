@@ -1,6 +1,6 @@
 FROM rhub/r-minimal
 
-RUN installr -d -t "gcc bash openssl-dev libgit2-dev" -a "openssl libgit2 git" gert gh remotes
+RUN installr -d -t "bash openssl-dev libgit2-dev" -a "openssl libgit2 git" r-lib/gert gh remotes
 
 COPY . /pkg
 COPY entrypoint.sh /entrypoint.sh
