@@ -198,6 +198,7 @@ get_recursive_remotes <- function(desc, via = NULL){
   remotes_repos <- trimws(strsplit(desc$remotes, ',')[[1]])
   all_lists <- lapply(remotes_repos, function(x){
     info <- remotes::parse_repo_spec(x)
+    info$username <- sub("^github::", "", info$username)
     if(info$repo %in% via)
       return(NULL)
     out <- list(
