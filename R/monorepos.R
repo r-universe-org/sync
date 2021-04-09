@@ -71,6 +71,9 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   registry <- read_registry_list()
   lapply(registry, update_one_package, update_pkg_remotes = TRUE)
 
+  # Should not be needed but sometimes remotes linger around
+  cleanup_remotes_list()
+
   # Now update all remotes (possibly new ones from package updates)
   # Filter out packages that already exist in the main package registry
   remotes <- read_remotes_list()
@@ -90,7 +93,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
       print_message("Deleting %s", pkg_dir)
       gert::git_rm(pkg_dir)
       unlink(pkg_dir, recursive = TRUE)
-      update_remotes_json(desc = list(package = pkgdir))
+      update_remotes_json(desc = list(package = pkg_dir))
       update_gitmodules()
       gert::git_add(c('.remotes.json', '.gitmodules'))
     })
@@ -167,21 +170,24 @@ update_remotes_json <- function(desc){
   if(any(cur_remotes) || length(new_remotes)){
     other_remotes <- old_remotes[!cur_remotes]
     all_remotes <- c(other_remotes, new_remotes)
-    if(length(all_remotes)){
-      sort_key <- vapply(all_remotes, function(x){
-        paste0(x$package, '-', x$from)
-      }, character(1))
-      all_remotes <- lapply(all_remotes[order(sort_key)], function(x){
-        x$via = I(x$via)
-        return(x)
-      })
-      jsonlite::write_json(all_remotes, '.remotes.json', auto_unbox = TRUE, pretty = TRUE)
-    } else {
-      unlink('.remotes.json')
-    }
+    write_remotes_json(all_remotes)
   }
 }
 
+write_remotes_json <- function(all_remotes){
+  if(length(all_remotes)){
+    sort_key <- vapply(all_remotes, function(x){
+      paste0(x$package, '-', x$from)
+    }, character(1))
+    all_remotes <- lapply(all_remotes[order(sort_key)], function(x){
+      x$via = I(x$via)
+      return(x)
+    })
+    jsonlite::write_json(all_remotes, '.remotes.json', auto_unbox = TRUE, pretty = TRUE)
+  } else {
+    unlink('.remotes.json')
+  }
+}
 
 get_all_remotes <- function(desc){
   out <- get_recursive_remotes(desc)
@@ -236,6 +242,15 @@ get_github_description <- function(x){
 read_remotes_list <- function(){
   if(file.exists('.remotes.json'))
     jsonlite::read_json('.remotes.json', simplifyVector = TRUE, simplifyDataFrame = FALSE)
+}
+
+cleanup_remotes_list <- function(){
+  registry <- read_registry_list()
+  packages <- vapply(registry, function(x){x$package}, character(1))
+  remotes <- Filter(function(x){
+    x$from %in% packages
+  }, read_remotes_list())
+  write_remotes_json(remotes)
 }
 
 print_message <- function(...){
