@@ -269,7 +269,7 @@ read_registry_list <- function(){
 }
 
 update_gitmodules <- function(){
-  registry <- read_registry_list()
+  registry <- lapply(read_registry_list(), function(x){c(x, registered = TRUE)})
   remotes <- read_remotes_list()
   registry_url <- gert::git_remote_list(repo = I('.registry'))$url
   pkgs <- c(list(list(
@@ -290,6 +290,8 @@ update_gitmodules <- function(){
       str <- paste0(str, '\n\tbranch = ', x$branch)
     if(length(x$subdir))
       str <- paste0(str, '\n\tsubdir = ', x$subdir)
+    if(isTRUE(x$registered))
+      str <- paste0(str, '\n\tregistered = true')
     return(str)
   }, character(1))
   writeLines(lines, '.gitmodules')
