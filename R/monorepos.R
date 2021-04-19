@@ -300,15 +300,31 @@ update_gitmodules <- function(){
 get_description_data <- function(pkg_dir){
   path <- file.path(pkg_dir, 'DESCRIPTION')
   out <- read_description_file(path)
-  if(!length(out$maintainer))
+  if(!length(out$maintainer) || !nchar(out$maintainer))
     stop("Failed to extract maintainer from description: ", pkg_dir)
   return(out)
 }
 
 read_description_file <- function(path){
-  desc <- tools:::.read_description(path)
-  extra <- tools:::.expand_package_description_db_R_fields(desc)
-  out <- as.list(c(desc, extra))
-  names(out) <- tolower(names(out))
-  return(out)
+  desc <- as.list(tools:::.read_description(path))
+  names(desc) <- tolower(names(desc))
+  if(!length(desc$maintainer)){
+    authors <- desc[['authors@r']]
+    if(length(authors))
+      desc <- c(desc, find_maintainer_safe(authors))
+  }
+  return(desc)
+}
+
+# Adapted from tools:::.expand_package_description_db_R_fields
+# The latter uses eval which can be abused for code injection
+find_maintainer_safe <- function(authors){
+  expr <- parse(text = authors)
+  env <- new.env(parent = emptyenv())
+  env$c <- base::c
+  env$person <- utils::person
+  aar <- eval(expr, envir = env, enclos = emptyenv())
+  maintainer <- utils:::.format_authors_at_R_field_for_maintainer(aar)
+  if(length(maintainer) && nchar(maintainer))
+    return(c(maintainer = maintainer))
 }
