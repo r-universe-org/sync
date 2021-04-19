@@ -322,8 +322,9 @@ find_maintainer_safe <- function(authors){
   expr <- parse(text = authors)
   env <- new.env(parent = emptyenv())
   env$c <- base::c
+  env$list <- base::list
   env$person <- utils::person
-  aar <- eval(expr, envir = env, enclos = emptyenv())
+  aar <- eval(expr, envir = env)
   maintainer <- utils:::.format_authors_at_R_field_for_maintainer(aar)
   if(length(maintainer) && nchar(maintainer))
     return(c(maintainer = maintainer))
