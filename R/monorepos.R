@@ -69,7 +69,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
 
   # First update all packages from the registry
   registry <- read_registry_list()
-  lapply(registry, update_one_package, update_pkg_remotes = TRUE)
+  results1 <- lapply(registry, try_update_package, update_pkg_remotes = TRUE)
 
   # Should not be needed but sometimes remotes linger around
   cleanup_remotes_list()
@@ -83,7 +83,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   # Filter duplicates
   remotes_pkgs <- vapply(remotes, function(x){x$package}, character(1))
   remotes_dups <- duplicated(remotes_pkgs)
-  lapply(remotes[!remotes_dups], update_one_package)
+  results2 <- lapply(remotes[!remotes_dups], try_update_package)
 
   # Finally get rid of deleted packages
   packages <- vapply(c(registry, remotes), function(x){x$package}, character(1))
@@ -103,6 +103,26 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   } else {
     print_message("No packages to delete. Everything is up-to-date")
   }
+
+  # Check for update failures
+  failures <- Filter(function(x){
+    inherits(x, 'update_failure')
+  }, c(results1, results2))
+
+  if(length(failures) > 0){
+    pkgs <- vapply(failures, function(x){
+      message(sprintf("\nERROR updating %s from %s: %s\n", x$package, x$url, attr(x, 'error')))
+      x$package
+    }, character(1))
+    stop("Failed to update packages: ", paste(pkgs, collapse = ', '))
+  }
+}
+
+try_update_package <- function(x, update_pkg_remotes = FALSE){
+  tryCatch(update_one_package(x = x, update_pkg_remotes = update_pkg_remotes), error = function(e){
+    gert::git_reset_hard()
+    structure(x, class = 'update_failure', error = e$message)
+  })
 }
 
 # Sync the registry packages with the monorepo
