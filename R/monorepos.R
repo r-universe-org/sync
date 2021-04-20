@@ -111,7 +111,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
 
   if(length(failures) > 0){
     pkgs <- vapply(failures, function(x){
-      message(sprintf("\nERROR updating %s from %s: %s\n", x$package, x$url, attr(x, 'error')))
+      message(sprintf("\nERROR updating %s from %s (%s)\n", x$package, x$url, attr(x, 'error')))
       x$package
     }, character(1))
     stop("Failed to update packages: ", paste(pkgs, collapse = ', '))
