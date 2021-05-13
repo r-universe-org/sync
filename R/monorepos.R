@@ -59,7 +59,8 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   gert::git_add('.gitmodules')
   if(any(gert::git_status()$staged)){
     print_message("Sync registry with upstream")
-    gert::git_add('.registry')
+    if(!identical(gert::git_status(staged = TRUE)$file, '.gitmodules'))
+      gert::git_add('.registry')
     gert::git_commit(message = "Sync registry", registry_commit$author)
     gert::git_push(verbose = TRUE)
   } else {
@@ -299,6 +300,7 @@ update_gitmodules <- function(){
   )), registry, remotes)
   pkgs_names <- vapply(pkgs, function(x){x$package}, character(1))
   pkgs <- pkgs[!duplicated(pkgs_names)]
+  pkgs <- lapply(pkgs, test_if_package_on_cran)
   lines <- vapply(pkgs, function(x){
     if(!length(x$package))
       stop("Field 'package' missing from registry entry")
@@ -310,8 +312,10 @@ update_gitmodules <- function(){
       str <- paste0(str, '\n\tbranch = ', x$branch)
     if(length(x$subdir))
       str <- paste0(str, '\n\tsubdir = ', x$subdir)
-    if(x$package != '.registry')
+    if(x$package != '.registry'){
       str <- paste0(str, '\n\tregistered = ', tolower(isTRUE(x$registered)))
+      str <- paste0(str, '\n\toncran = ', tolower(isTRUE(x$oncran)))
+    }
     return(str)
   }, character(1))
   writeLines(lines, '.gitmodules')
@@ -353,3 +357,29 @@ find_maintainer_safe <- function(authors){
   if(length(maintainer) && nchar(maintainer))
     return(c(maintainer = maintainer))
 }
+
+test_if_package_on_cran <- function(x){
+  cran_url <- package_cran_url(x$package)
+  if(length(cran_url)) {
+    # Test if url is a substring of cran url (ignore subdirs)
+    pkgurl <- tolower(sub("^http://", "https://", x$url))
+    cmpurl <- tolower(substr(pkgurl,1,nchar(cran_url)))
+    if(identical(cran_url, cmpurl))
+      x$oncran <- TRUE
+  }
+  return(x)
+}
+
+package_cran_url <- local({
+  crandata <- NULL
+  function(pkg){
+    if(is.null(crandata)){
+      crandata <<- utils::read.csv('https://r-universe-org.github.io/cran-to-git/crantogit.csv')
+    }
+    df <- crandata[crandata$package == pkg,]
+    if(nrow(df) == 0){
+      return(NULL)
+    }
+    return(df$url[1])
+  }
+})
