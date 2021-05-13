@@ -56,11 +56,12 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   gert::git_reset_hard('origin/HEAD', repo = I('.registry'))
   registry_commit <- gert::git_log(repo = I('.registry'), max = 1)
   update_gitmodules()
-  gert::git_add('.gitmodules')
+  write_metadata_json()
+  gert::git_add(c('.gitmodules', '.metadata.json'))
   if(any(gert::git_status()$staged)){
     print_message("Sync registry with upstream")
-    if(!identical(gert::git_status(staged = TRUE)$file, '.gitmodules'))
-      gert::git_add('.registry')
+#    if('.gitmodules' %in% gert::git_status(staged = TRUE)$file)
+#      gert::git_add('.registry')
     gert::git_commit(message = "Sync registry", registry_commit$author)
     gert::git_push(verbose = TRUE)
   } else {
@@ -300,7 +301,6 @@ update_gitmodules <- function(){
   )), registry, remotes)
   pkgs_names <- vapply(pkgs, function(x){x$package}, character(1))
   pkgs <- pkgs[!duplicated(pkgs_names)]
-  pkgs <- lapply(pkgs, test_if_package_on_cran)
   lines <- vapply(pkgs, function(x){
     if(!length(x$package))
       stop("Field 'package' missing from registry entry")
@@ -312,10 +312,8 @@ update_gitmodules <- function(){
       str <- paste0(str, '\n\tbranch = ', x$branch)
     if(length(x$subdir))
       str <- paste0(str, '\n\tsubdir = ', x$subdir)
-    if(x$package != '.registry'){
+    if(x$package != '.registry')
       str <- paste0(str, '\n\tregistered = ', tolower(isTRUE(x$registered)))
-      str <- paste0(str, '\n\toncran = ', tolower(isTRUE(x$oncran)))
-    }
     return(str)
   }, character(1))
   writeLines(lines, '.gitmodules')
@@ -358,6 +356,14 @@ find_maintainer_safe <- function(authors){
     return(c(maintainer = maintainer))
 }
 
+write_metadata_json <- function(){
+  registry <- read_registry_list()
+  packages <- vapply(registry, function(x){x$package}, character(1))
+  oncran <- vapply(registry, test_if_package_on_cran, logical(1))
+  df <- data.frame(package = packages, oncran = oncran)
+  jsonlite::write_json(df, '.metadata.json', pretty = TRUE)
+}
+
 test_if_package_on_cran <- function(x){
   cran_url <- package_cran_url(x$package)
   if(length(cran_url)) {
@@ -365,9 +371,9 @@ test_if_package_on_cran <- function(x){
     pkgurl <- tolower(sub("^http://", "https://", x$url))
     cmpurl <- tolower(substr(pkgurl,1,nchar(cran_url)))
     if(identical(cran_url, cmpurl))
-      x$oncran <- TRUE
+      return(TRUE)
   }
-  return(x)
+  return(FALSE)
 }
 
 package_cran_url <- local({
