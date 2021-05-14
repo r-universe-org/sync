@@ -60,8 +60,8 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   gert::git_add(c('.gitmodules', '.metadata.json'))
   if(any(gert::git_status()$staged)){
     print_message("Sync registry with upstream")
-#    if('.gitmodules' %in% gert::git_status(staged = TRUE)$file)
-#      gert::git_add('.registry')
+    if('.gitmodules' %in% gert::git_status(staged = TRUE)$file)
+      gert::git_add('.registry')
     gert::git_commit(message = "Sync registry", registry_commit$author)
     gert::git_push(verbose = TRUE)
   } else {
