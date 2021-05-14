@@ -357,9 +357,14 @@ find_maintainer_safe <- function(authors){
 }
 
 write_metadata_json <- function(){
+  allcran <- row.names(utils::available.packages('https://cloud.r-project.org/src/contrib'))
   registry <- read_registry_list()
   packages <- vapply(registry, function(x){x$package}, character(1))
-  oncran <- vapply(registry, test_if_package_on_cran, logical(1))
+  oncran <- vapply(registry, function(x){
+    if(x %in% allcran)
+      return(test_if_package_on_cran(x))
+    return(NA)
+  }, logical(1))
   df <- data.frame(package = packages, oncran = oncran)
   jsonlite::write_json(df, '.metadata.json', pretty = TRUE)
 }
