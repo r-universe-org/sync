@@ -52,12 +52,17 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   }
 
   # Consider switching to personal registry
-  if(file.exists('.ghapp') && basename(gert::git_submodule_info(".registry")$url) == "cran-to-git"){
+  if(basename(gert::git_submodule_info(".registry")$url) == "cran-to-git"){
     pkgsurl <- sprintf('https://raw.githubusercontent.com/%s/universe/main/packages.json', monorepo_name)
     req <- curl::curl_fetch_memory(pkgsurl)
     if(req$status_code == 200){
-      message("Switching to personal registry!")
-      regrepo <- paste0('https://github.com/%s/universe', monorepo_name)
+      pkgdf <- jsonlite::fromJSON(rawToChar(req$content))
+      if(!is.data.frame(pkgdf))
+        stop("The package.json file in personal registry does not have expected structure")
+      if(!all(c('package', 'url') %in% names(pkgdf)))
+        stop("The package.json file does not have expected 'package and' 'url' fields")
+      message("Switching universe to personal registry!")
+      regrepo <- sprintf('https://github.com/%s/universe', monorepo_name)
       sys::exec_wait("git", c("submodule", "set-url", ".registry", regrepo))
       gert::git_add('.registry')
     }
