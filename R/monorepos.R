@@ -51,6 +51,18 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
     print_message("GHA workflows are up-to-date")
   }
 
+  # Consider switching to personal registry
+  if(file.exists('.ghapp') && basename(gert::git_submodule_info(".registry")$url) == "cran-to-git"){
+    pkgsurl <- sprintf('https://raw.githubusercontent.com/%s/universe/main/packages.json', monorepo_name)
+    req <- curl::curl_fetch_memory(pkgsurl)
+    if(req$status_code == 200){
+      message("Switching to personal registry!")
+      regrepo <- paste0('https://github.com/%s/universe', monorepo_name)
+      sys::exec_wait("git", c("submodule", "set-url", ".registry", regrepo))
+      gert::git_add('.registry')
+    }
+  }
+
   # Sync with the user registry file
   sys::exec_wait("git", c("submodule", "update", "--init", "--remote", '.registry'))
   gert::git_reset_hard('origin/HEAD', repo = I('.registry'))
@@ -361,7 +373,7 @@ write_metadata_json <- function(){
   registry <- read_registry_list()
   packages <- vapply(registry, function(x){x$package}, character(1))
   oncran <- vapply(registry, function(x){
-    if(x %in% allcran)
+    if(x$package %in% allcran)
       return(test_if_package_on_cran(x))
     return(NA)
   }, logical(1))
