@@ -167,6 +167,7 @@ update_one_package <- function(x, update_pkg_remotes = FALSE){
         print_message("Package '%s' already at commit '%s'", pkg_dir, submodule_head)
       } else {
         print_message("No such branch '%s' for package '%s'. Skipping...", pkg_branch, pkg_dir)
+        gert::git_reset_hard()
       }
       return()
     }
