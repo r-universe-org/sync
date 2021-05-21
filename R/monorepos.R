@@ -53,7 +53,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
 
   # Consider switching to personal registry
   if(basename(gert::git_submodule_info(".registry")$url) == "cran-to-git"){
-    pkgsurl <- sprintf('https://raw.githubusercontent.com/%s/universe/main/packages.json', monorepo_name)
+    pkgsurl <- sprintf('https://raw.githubusercontent.com/%s/universe/HEAD/packages.json', monorepo_name)
     req <- curl::curl_fetch_memory(pkgsurl)
     if(req$status_code == 200){
       pkgdf <- jsonlite::fromJSON(rawToChar(req$content))
