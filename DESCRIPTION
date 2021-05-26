@@ -11,7 +11,8 @@ Imports:
     curl,
     sys,
     jsonlite,
-    gert (>= 1.0.9000),
+    gert,
+    gh,
     ghapps,
     remotes
 Remotes: 

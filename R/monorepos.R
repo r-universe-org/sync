@@ -161,6 +161,8 @@ update_one_package <- function(x, update_pkg_remotes = FALSE){
   }
   if(submodule$status == 0){
     submodule_head <- sub("^[+-]", "", sys::as_text(submodule$stdout))
+    if(pkg_branch == '*release')
+      pkg_branch <- lookup_github_release(pkg_url)
     out <- sys::exec_internal('git', c("ls-remote", pkg_url, pkg_branch))
     if(!length(out$stdout)){
       if(grepl(paste0("^", pkg_branch), submodule_head)){
@@ -196,7 +198,7 @@ update_one_package <- function(x, update_pkg_remotes = FALSE){
     subrepo <- gert::git_open(pkg_dir)
     stopifnot(basename(gert::git_info(repo = subrepo)$path) == pkg_dir)
     pkg_commit <- gert::git_log(repo = subrepo, max = 1)
-    person <- as.person(desc$maintainer)[1]
+    person <- utils::as.person(desc$maintainer)[1]
     sig <- paste(format(person, include = c("given", "family", "email")), unclass(pkg_commit$time))
     gert::git_commit(message = paste(desc$package, desc$version), author = sig)
     gert::git_push(verbose = TRUE)
@@ -412,3 +414,18 @@ package_cran_url <- local({
     return(df$url[1])
   }
 })
+
+lookup_github_release <- function(pkg_url){
+  tryCatch({
+    if(!grepl("github.com", pkg_url))
+      stop('A "branch":"*release" is only supported github.com URLs')
+    p <- remotes::parse_github_url(pkg_url)
+    release <- gh::gh(sprintf("/repos/%s/%s/releases/latest", p$username, p$repo))
+    if(!length(release$tag_name) || !nchar(release$tag_name))
+      stop("Did not find any tag_name in output")
+    return(release$tag_name)
+  }, error = function(e){
+    message(sprintf("Failed to find *release for: %s: %s", pkg_url, e$message))
+    return('*release') # Fall back to non existing branch behavior
+  })
+}
