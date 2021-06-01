@@ -352,8 +352,12 @@ read_description_file <- function(path){
   names(desc) <- tolower(names(desc))
   if(!length(desc$maintainer)){
     authors <- desc[['authors@r']]
-    if(length(authors))
-      desc <- c(desc, find_maintainer_safe(authors))
+    if(length(authors)){
+      maintainer <- tryCatch(find_maintainer_safe(authors), error = function(e){
+        stop(sprintf("Failed to parse Authors@R for package '%s': %s", desc$package, e$message))
+      })
+      desc <- c(desc, maintainer)
+    }
   }
   return(desc)
 }
