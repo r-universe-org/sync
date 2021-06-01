@@ -367,6 +367,7 @@ find_maintainer_safe <- function(authors){
   env$list <- base::list
   env$paste <- base::paste
   env$paste0 <- base::paste0
+  env$as.person <- utils::as.person
   env$person <- function(..., comment = NULL){
     utils::person(...)
   }
