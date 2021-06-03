@@ -62,14 +62,15 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
     pkgsurl <- sprintf('https://raw.githubusercontent.com/%s/universe/HEAD/packages.json', monorepo_name)
     req <- curl::curl_fetch_memory(pkgsurl)
     if(req$status_code == 200){
-      pkgdf <- jsonlite::fromJSON(rawToChar(req$content))
+      message("Switching universe to personal registry!")
+      regrepo <- sprintf('https://github.com/%s/universe', monorepo_name)
+      sys::exec_wait("git", c("submodule", "set-url", ".registry", regrepo))
+      sys::exec_wait("git", c("submodule", "update", "--init", "--remote", '.registry'))
+      pkgdf <- jsonlite::fromJSON('.registry/packages.json')
       if(!is.data.frame(pkgdf))
         stop("The package.json file in personal registry does not have expected structure")
       if(!all(c('package', 'url') %in% names(pkgdf)))
         stop("The package.json file does not have expected 'package and' 'url' fields")
-      message("Switching universe to personal registry!")
-      regrepo <- sprintf('https://github.com/%s/universe', monorepo_name)
-      sys::exec_wait("git", c("submodule", "set-url", ".registry", regrepo))
       gert::git_add('.registry')
     }
   }
