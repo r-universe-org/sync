@@ -128,6 +128,25 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
     inherits(x, 'update_failure')
   }, c(results1, results2))
 
+  # Update commit status for upstream universe registry repo
+  run_id <- Sys.getenv('GITHUB_RUN_ID')
+  registry_submodule <- gert::git_submodule_info(".registry")
+  registry_repo <- registry_submodule$url
+  if(basename(registry_repo) != "cran-to-git" && nchar('run_id') && nchar(Sys.getenv('GH_APP_KEY'))){
+    try({
+      repo <- sub("https?://github.com/", "", registry_repo)
+      repo <- sub("\\.git$", "", repo)
+      token <- ghapps::gh_app_token(repo, app_id = '87942')
+      endpoint <- sprintf('/repos/%s/statuses/%s', repo, registry_submodule$head)
+      context <- sprintf('r-universe/%s/sync', basename(repo))
+      description <- 'Update R-universe monorepo from registryr'
+      state <- ifelse(length(failures), 'failure', 'success')
+      url <- sprintf('%s/actions/runs/%s', monorepo_url, run_id)
+      gh::gh(endpoint, .method = 'POST', .token = token, state = state,
+             target_url = url, context = context, description = description)
+    })
+  }
+
   if(length(failures) > 0){
     pkgs <- vapply(failures, function(x){
       message(sprintf("\nERROR updating %s from %s (%s)\n", x$package, x$url, attr(x, 'error')))
