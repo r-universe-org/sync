@@ -156,7 +156,11 @@ set_registry_commit_status <- function(monorepo_url, success){
       repo <- sub("https?://github.com/", "", registry_repo)
       repo <- sub("\\.git$", "", repo)
       token <- ghapps::gh_app_token(repo, app_id = '87942')
-      endpoint <- sprintf('/repos/%s/statuses/%s', repo, registry_submodule$head)
+      sha <- tryCatch({
+        # try 'dirty' .registry repo HEAD, if unavail, use staged submodule state
+        gert::git_info(I(".registry"))$commit
+      }, error = function(e){registry_submodule$head})
+      endpoint <- sprintf('/repos/%s/statuses/%s', repo, sha)
       context <- sprintf('r-universe/%s/sync', basename(repo))
       description <- 'Update R-universe monorepo from registryr'
       state <- ifelse(isTRUE(success), 'success', 'failure')
