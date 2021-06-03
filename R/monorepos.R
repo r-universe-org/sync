@@ -161,7 +161,7 @@ set_registry_commit_status <- function(monorepo_url, success){
         gert::git_info(I(".registry"))$commit
       }, error = function(e){registry_submodule$head})
       endpoint <- sprintf('/repos/%s/statuses/%s', repo, sha)
-      context <- sprintf('r-universe/%s/sync', basename(repo))
+      context <- sprintf('r-universe/%s/sync', dirname(repo))
       description <- 'Update R-universe monorepo from registryr'
       state <- ifelse(isTRUE(success), 'success', 'failure')
       url <- sprintf('%s/actions/runs/%s', monorepo_url, run_id)
