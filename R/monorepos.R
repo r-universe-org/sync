@@ -162,9 +162,9 @@ set_registry_commit_status <- function(monorepo_url, success){
       url <- sprintf('%s/actions/runs/%s', monorepo_url, run_id)
       gh::gh(endpoint, .method = 'POST', .token = token, state = state,
              target_url = url, context = context, description = description)
-      cat("Succesfully set commit status to:", url)
+      cat("Succesfully set commit status to:", url, "\n")
     }, error = function(e){
-      cat("Failed to set commit status:", e$message)
+      cat("Failed to set commit status:", e$message, "\n")
     })
   }
 }
