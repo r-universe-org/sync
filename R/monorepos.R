@@ -198,8 +198,15 @@ update_one_package <- function(x, update_pkg_remotes = FALSE){
   }
   if(submodule$status == 0){
     submodule_head <- sub("^[+-]", "", sys::as_text(submodule$stdout))
-    if(pkg_branch == '*release')
+    if(pkg_branch == '*release'){
       pkg_branch <- lookup_github_release(pkg_url)
+      if(identical(pkg_branch, get_release_version(pkg_dir))){
+        print_message("Latest release version unchanged: %s %s", pkg_dir, pkg_branch)
+      } else {
+        print_message("Updating release version: %s %s", pkg_dir, pkg_branch)
+        set_release_version(pkg_dir, pkg_branch)
+      }
+    }
     out <- sys::exec_internal('git', c("ls-remote", pkg_url, pkg_branch))
     if(!length(out$stdout)){
       if(grepl(paste0("^", pkg_branch), submodule_head)){
@@ -365,8 +372,11 @@ update_gitmodules <- function(){
       stop("Field 'url' missing from registry entry")
     str <- sprintf('[submodule "%s"]\n\tpath = %s\n\turl = %s\n\tshallow = true',
             x$package, x$package, x$url)
-    if(length(x$branch))
+    if(length(x$branch)){
+      if(identical(x$branch, '*release')) # keep release we have currently
+        x$branch <- get_release_version(x$package)
       str <- paste0(str, '\n\tbranch = ', x$branch)
+    }
     if(length(x$subdir))
       str <- paste0(str, '\n\tsubdir = ', x$subdir)
     if(x$package != '.registry')
@@ -470,4 +480,16 @@ lookup_github_release <- function(pkg_url){
     message(sprintf("Failed to find *release for: %s: %s", pkg_url, e$message))
     return('*release') # Fall back to non existing branch behavior
   })
+}
+
+get_release_version <- function(pkg){
+  field <- sprintf("submodule.%s.branch", pkg)
+  out <- sys::exec_internal('git', c("config", "-f", ".gitmodules", "--get", field), error = FALSE)
+  ifelse(out$status, '*release', sys::as_text(out$stdout))
+}
+
+set_release_version <- function(pkg, value){
+  field <- sprintf("submodule.%s.branch", pkg)
+  sys::exec_internal('git', c("config", "-f", ".gitmodules", field, value))
+  gert::git_add(".gitmodules")
 }
