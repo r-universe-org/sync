@@ -226,7 +226,8 @@ update_one_package <- function(x, update_pkg_remotes = FALSE){
     sys::exec_wait("git", c("update-index", "--cacheinfo", "160000", remote_head, pkg_dir))
     sys::exec_wait("git", c("submodule", "update", "--init", pkg_dir))
   } else {
-    print_message("FAILED to init submodule %s", pkg_dir)
+    gert::git_reset_hard()
+    stop("FAILED to init submodule: ", pkg_dir)
   }
   gert::git_add(pkg_dir)
   if(!any(gert::git_status()$staged)){
