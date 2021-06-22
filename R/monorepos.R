@@ -81,6 +81,13 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   registry_commit <- gert::git_log(repo = I('.registry'), max = 1)
   update_gitmodules()
   write_metadata_json()
+
+  # Very basic fair use check for now
+  if(basename(gert::git_submodule_info(".registry")$url) != "cran-to-git"){
+    if(length(read_registry_list()) > 100){
+      stop("Personal universes are currently limited to 100 packages")
+    }
+  }
   gert::git_add(c('.gitmodules', '.metadata.json'))
   if(any(gert::git_status()$staged)){
     print_message("Sync registry with upstream")
