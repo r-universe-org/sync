@@ -202,19 +202,13 @@ update_one_package <- function(x, update_pkg_remotes = FALSE){
   if(submodule$status != 0){
     print_message("Adding new package '%s' from: %s", pkg_dir, pkg_url)
     sys::exec_wait("git", c("submodule", "add", "--force", pkg_url, pkg_dir))
-    submodule <- sys::exec_internal("git", c("submodule", "status", pkg_dir), error = FALSE)
-  }
-  if(submodule$status == 0){
+    if(pkg_branch == '*release')
+      pkg_branch <- update_release_branch(pkg_dir, pkg_url)
+    gert::git_submodule_set_to(submodule = pkg_dir, ref = pkg_branch)
+  } else {
     submodule_head <- sub("^[+-]", "", sys::as_text(submodule$stdout))
-    if(pkg_branch == '*release'){
-      pkg_branch <- lookup_github_release(pkg_url)
-      if(identical(pkg_branch, get_release_version(pkg_dir))){
-        print_message("Latest release version unchanged: %s %s", pkg_dir, pkg_branch)
-      } else {
-        print_message("Updating release version: %s %s", pkg_dir, pkg_branch)
-        set_release_version(pkg_dir, pkg_branch)
-      }
-    }
+    if(pkg_branch == '*release')
+      pkg_branch <- update_release_branch(pkg_dir, pkg_url)
     out <- sys::exec_internal('git', c("ls-remote", pkg_url, pkg_branch))
     if(!length(out$stdout)){
       if(grepl(paste0("^", pkg_branch), submodule_head)){
@@ -233,9 +227,6 @@ update_one_package <- function(x, update_pkg_remotes = FALSE){
     print_message("Updating package '%s' from: %s", pkg_dir, pkg_url)
     sys::exec_wait("git", c("update-index", "--cacheinfo", "160000", remote_head, pkg_dir))
     sys::exec_wait("git", c("submodule", "update", "--init", pkg_dir))
-  } else {
-    gert::git_reset_hard()
-    stop("FAILED to init submodule: ", pkg_dir)
   }
   gert::git_add(pkg_dir)
   if(!any(gert::git_status()$staged)){
@@ -501,4 +492,15 @@ set_release_version <- function(pkg, value){
   field <- sprintf("submodule.%s.branch", pkg)
   sys::exec_internal('git', c("config", "-f", ".gitmodules", field, value))
   gert::git_add(".gitmodules")
+}
+
+update_release_branch <- function(pkg_dir, pkg_url){
+  pkg_branch <- lookup_github_release(pkg_url)
+  if(identical(pkg_branch, get_release_version(pkg_dir))){
+    print_message("Latest release version unchanged: %s %s", pkg_dir, pkg_branch)
+  } else {
+    print_message("Updating release version: %s %s", pkg_dir, pkg_branch)
+    set_release_version(pkg_dir, pkg_branch)
+  }
+  return(pkg_branch)
 }
