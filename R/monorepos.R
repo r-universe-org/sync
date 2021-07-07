@@ -210,16 +210,21 @@ update_one_package <- function(x, update_pkg_remotes = FALSE){
     if(pkg_branch == '*release')
       pkg_branch <- update_release_branch(pkg_dir, pkg_url)
     out <- sys::exec_internal('git', c("ls-remote", pkg_url, pkg_branch))
-    if(!length(out$stdout)){
+    if(length(out$stdout)){
+      remote_head <- strsplit(sys::as_text(out$stdout), '\\W')[[1]][1]
+    } else {
       if(grepl(paste0("^", pkg_branch), submodule_head)){
         print_message("Package '%s' already at commit '%s'", pkg_dir, submodule_head)
+        return()
+      } else if(grepl('^[0-9a-f]{6,100}$', tolower(pkg_branch))){
+        # Assume pkg_branch is a raw commit hash
+        remote_head <- tolower(pkg_branch)
       } else {
         print_message("No such branch '%s' for package '%s'. Skipping...", pkg_branch, pkg_dir)
         gert::git_reset_hard()
+        return()
       }
-      return()
     }
-    remote_head <- strsplit(sys::as_text(out$stdout), '\\W')[[1]][1]
     if(!(pkg_dir %in% gert::git_status()$file) && grepl(remote_head, submodule_head, fixed = TRUE)){
       print_message("Submodule %s unchanged (%s)", pkg_dir, remote_head)
       return()
