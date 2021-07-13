@@ -59,11 +59,12 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
 
   # Consider switching to personal registry
   if(basename(gert::git_submodule_info(".registry")$url) == "cran-to-git"){
-    pkgsurl <- sprintf('https://raw.githubusercontent.com/%s/universe/HEAD/packages.json', monorepo_name)
+    repo_name <- paste0(monorepo_name, '/universe')
+    pkgsurl <- sprintf('https://raw.githubusercontent.com/%s/HEAD/packages.json', repo_name)
     req <- curl::curl_fetch_memory(pkgsurl)
-    if(req$status_code == 200){
+    if(req$status_code == 200 && not_a_fork(repo_name)){
       message("Switching universe to personal registry!")
-      regrepo <- sprintf('https://github.com/%s/universe', monorepo_name)
+      regrepo <- sprintf('https://github.com/%s', repo_name)
       sys::exec_wait("git", c("submodule", "set-url", ".registry", regrepo))
       sys::exec_wait("git", c("submodule", "update", "--init", "--remote", '.registry'))
       pkgdf <- jsonlite::fromJSON('.registry/packages.json')
@@ -508,4 +509,10 @@ update_release_branch <- function(pkg_dir, pkg_url){
     set_release_version(pkg_dir, pkg_branch)
   }
   return(pkg_branch)
+}
+
+not_a_fork <- function(repo){
+  res <- gh::gh(paste0('/repos/', repo))
+  print_message("Repo %s %s a fork.", repo, ifelse(res$fork, "is", "is NOT"))
+  return(!isTRUE(res$fork))
 }
