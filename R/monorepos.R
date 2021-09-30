@@ -42,6 +42,12 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   # Sync the workflow files
   workflows <- tempfile()
   gert::git_clone('https://github.com/r-universe-org/workflows', workflows)
+  if(monorepo_name == "test"){
+    print_message("This is the 'test' universe. Looking for a 'test' branch in workflows.")
+    tryCatch(gert::git_branch_checkout('test', repo = I(workflows)), function(e){
+      print_message("No special 'test' workflows currently. Using defaults.")
+    })
+  }
   workflow_commit <- gert::git_log(repo = I(workflows), max = 1)
   infiles <- list.files(workflows, full.names = TRUE)
   destfiles <- file.path('.github/workflows', basename(infiles))
