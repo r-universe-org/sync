@@ -44,7 +44,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   gert::git_clone('https://github.com/r-universe-org/workflows', workflows)
   if(monorepo_name == "test"){
     print_message("This is the 'test' universe. Looking for a 'test' branch in workflows.")
-    tryCatch(gert::git_branch_checkout('test', repo = I(workflows)), function(e){
+    tryCatch(gert::git_branch_checkout('test', repo = I(workflows)), error = function(e){
       print_message("No special 'test' workflows currently. Using defaults.")
     })
   }
