@@ -444,6 +444,7 @@ find_maintainer_safe <- function(authors){
 write_metadata_json <- function(){
   allcran <- row.names(utils::available.packages('https://cloud.r-project.org/src/contrib'))
   registry <- read_registry_list()
+  registry <- Filter(function(x){!isFALSE(x$available)}, registry)
   packages <- vapply(registry, function(x){x$package}, character(1))
   oncran <- vapply(registry, function(x){
     if(x$package %in% allcran)
