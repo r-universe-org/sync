@@ -64,15 +64,27 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   }
 
   # Consider switching to personal registry
-  if(basename(gert::git_submodule_info(".registry")$url) == "cran-to-git"){
-    registry_repo <- paste0(monorepo_name, '/universe')
-    if(is_valid_registry(registry_repo)){
-      switch_to_registry(registry_repo)
+  personal_registry <- paste0(monorepo_name, '/universe')
+  current_registry <- gert::git_submodule_info(".registry")$url
+  if(basename(current_registry) == "cran-to-git"){
+    if(is_valid_registry(personal_registry)){
+      switch_to_registry(personal_registry)
     }
   }
 
-  # Sync with the user registry file
-  sys::exec_wait("git", c("submodule", "update", "--init", "--remote", '.registry'))
+  # Sync with the user registry file (currently libgit2 does not support shallow clones, sadly)
+  res <- sys::exec_wait("git", c("submodule", "update", "--init", "--remote", '.registry'))
+
+  # If this fails, check if the personal registry still exists
+  if(res != 0){
+    if(basename(current_registry) == "universe" && is_deleted_registry(personal_registry)){
+      switch_to_registry('r-universe-org/cran-to-git', validate = FALSE)
+      sys::exec_wait("git", c("submodule", "update", "--init", "--remote", '.registry'))
+    } else {
+      stop("Failure cloning .registry repository")
+    }
+  }
+
   gert::git_reset_hard('origin/HEAD', repo = I('.registry'))
   registry_commit <- gert::git_log(repo = I('.registry'), max = 1)
   update_gitmodules()
@@ -519,6 +531,13 @@ is_valid_registry <- function(repo_name){
   success <- curl::curl_fetch_memory(pkgsurl)$status_code == 200
   message("Checking if a registry exists at: ", repo_name, ": ", ifelse(success, 'yes', "no"))
   return(success && not_a_fork(repo_name))
+}
+
+# specifically test for 404, not some temporary network error
+is_deleted_registry <- function(repo_name){
+  pkgsurl <- sprintf('https://raw.githubusercontent.com/%s/HEAD/packages.json', repo_name)
+  req <- curl::curl_fetch_memory(pkgsurl)
+  return(req$status_code == 404)
 }
 
 switch_to_registry <- function(repo_name, validate = TRUE){
