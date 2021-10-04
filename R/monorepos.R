@@ -521,15 +521,17 @@ is_valid_registry <- function(repo_name){
   return(success && not_a_fork(repo_name))
 }
 
-switch_to_registry <- function(repo_name){
+switch_to_registry <- function(repo_name, validate = TRUE){
   message("Switching universe to registry: ", repo_name)
   regrepo <- sprintf('https://github.com/%s', repo_name)
   sys::exec_wait("git", c("submodule", "set-url", ".registry", regrepo))
   sys::exec_wait("git", c("submodule", "update", "--init", "--remote", '.registry'))
-  pkgdf <- jsonlite::fromJSON('.registry/packages.json')
-  if(!is.data.frame(pkgdf))
-    stop("The package.json file in personal registry does not have expected structure")
-  if(!all(c('package', 'url') %in% names(pkgdf)))
-    stop("The package.json file does not have expected 'package and' 'url' fields")
+  if(isTRUE(validate)){
+    pkgdf <- jsonlite::fromJSON('.registry/packages.json')
+    if(!is.data.frame(pkgdf))
+      stop("The package.json file in personal registry does not have expected structure")
+    if(!all(c('package', 'url') %in% names(pkgdf)))
+      stop("The package.json file does not have expected 'package and' 'url' fields")
+  }
   gert::git_add('.registry')
 }
