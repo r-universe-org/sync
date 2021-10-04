@@ -253,6 +253,10 @@ update_one_package <- function(x, update_pkg_remotes = FALSE){
   } else {
     r_pkg_dir <- ifelse(length(x$subdir) > 0, file.path(pkg_dir, x$subdir), pkg_dir)
     desc <- get_description_data(r_pkg_dir)
+    if(!identical(desc$package, pkg_dir)){
+      delete_one_package(pkg_dir)
+      stop(sprintf("Package '%s' from registry does not match package name in description file: '%s'", pkg_dir, desc$package))
+    }
     if(isTRUE(update_pkg_remotes)){
       update_remotes_json(desc)
       update_gitmodules()
