@@ -15,9 +15,9 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   setwd(repo)
 
   # Try to set the commit status, even in case of total failure
-  success <- FALSE
+  action_success <- FALSE
   on.exit({
-    set_registry_commit_status(monorepo_url, success)
+    set_registry_commit_status(monorepo_url, action_success)
     setwd(pwd)
   })
 
@@ -157,8 +157,11 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
       x$package
     }, character(1))
     stop("Failed to update packages: ", paste(pkgs, collapse = ', '))
+  } else if(length(registry) == 0){
+    stop(sprintf("GitHub user '%s' does not have a packages.json file, nor any CRAN packages.
+Please create a package registry as explained on: https://ropensci.org/blog/2021/06/22/setup-runiverse/", monorepo_name), call. = FALSE)
   } else {
-    success <- TRUE
+    action_success <- TRUE
   }
 }
 
