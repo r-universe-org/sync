@@ -131,15 +131,8 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   packages <- vapply(c(registry, remotes), function(x){x$package}, character(1))
   remove_packages <- setdiff(list.files(repo), packages)
   if(length(remove_packages)){
-    lapply(remove_packages, function(pkg_dir){
-      print_message("Deleting %s", pkg_dir)
-      gert::git_rm(pkg_dir)
-      unlink(pkg_dir, recursive = TRUE)
-      update_remotes_json(desc = list(package = pkg_dir))
-      update_gitmodules()
-      gert::git_add(c('.remotes.json', '.gitmodules'))
-    })
     msg <- paste("Deleting packages:", paste0(remove_packages, collapse = ', '))
+    lapply(remove_packages, delete_one_package)
     gert::git_commit(msg, registry_commit$author)
     gert::git_push(verbose = TRUE)
   } else {
@@ -198,6 +191,15 @@ try_update_package <- function(x, update_pkg_remotes = FALSE){
     gert::git_reset_hard()
     structure(x, class = 'update_failure', error = e$message)
   })
+}
+
+delete_one_package <- function(pkg_dir){
+  print_message("Deleting %s", pkg_dir)
+  gert::git_rm(pkg_dir)
+  unlink(pkg_dir, recursive = TRUE)
+  update_remotes_json(desc = list(package = pkg_dir))
+  update_gitmodules()
+  gert::git_add(c('.remotes.json', '.gitmodules'))
 }
 
 # Sync the registry packages with the monorepo
