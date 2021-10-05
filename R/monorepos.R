@@ -319,8 +319,9 @@ get_recursive_remotes <- function(desc, via = NULL){
     info$username <- sub("^github::", "", info$username)
     if(info$repo %in% via)
       return(NULL)
+    desc <- get_github_description(info)
     out <- list(
-      package = info$repo,
+      package = desc$package,
       url = sprintf("https://github.com/%s/%s", info$username, info$repo),
       via = via
     )
@@ -330,7 +331,7 @@ get_recursive_remotes <- function(desc, via = NULL){
     if(length(info$subdir) && nchar(info$subdir)){
       out$subdir = info$subdir
     }
-    sub_remotes <- get_recursive_remotes(get_github_description(info), via = via)
+    sub_remotes <- get_recursive_remotes(desc, via = via)
     c(list(out), sub_remotes)
   })
   do.call(c, all_lists)
