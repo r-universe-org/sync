@@ -370,12 +370,13 @@ print_message <- function(...){
 read_registry_list <- function(){
   monorepo_url <- gert::git_remote_info()$url
   jsonfile <- sprintf('.registry/%s.json', sub("_", "@", basename(monorepo_url), fixed = TRUE))
-  if(file.exists(jsonfile)){
+  registry <- if(file.exists(jsonfile)){
     jsonlite::read_json(jsonfile)
   } else {
     stopifnot("packages.json does not exist" = file.exists('.registry/packages.json'))
     jsonlite::read_json('.registry/packages.json')
   }
+  Filter(function(x){!isFALSE(x$available)}, registry)
 }
 
 update_gitmodules <- function(){
