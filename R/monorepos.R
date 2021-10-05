@@ -443,6 +443,7 @@ find_maintainer_safe <- function(authors){
   env$paste <- base::paste
   env$paste0 <- base::paste0
   env$as.person <- utils::as.person
+  env[['(']] = getFromNamespace('(', 'base') # Some people use e.g: role = ("aut")
   env$person <- function(..., comment = NULL){
     utils::person(...)
   }
