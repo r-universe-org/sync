@@ -400,10 +400,10 @@ update_gitmodules <- function(){
     if(length(x$branch)){
       if(identical(x$branch, '*release')) # keep release we have currently
         x$branch <- get_release_version(x$package)
-      str <- paste0(str, '\n\tbranch = ', x$branch)
+      str <- paste0(str, '\n\tbranch = ', x$branch[1])
     }
     if(length(x$subdir))
-      str <- paste0(str, '\n\tsubdir = ', x$subdir)
+      str <- paste0(str, '\n\tsubdir = ', x$subdir[1])
     if(x$package != '.registry')
       str <- paste0(str, '\n\tregistered = ', tolower(isTRUE(x$registered)))
     return(str)
