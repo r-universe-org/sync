@@ -379,6 +379,14 @@ read_registry_list <- function(){
   Filter(function(x){!isFALSE(x$available)}, registry)
 }
 
+# Should we tolowercase here?
+# I think git urls could be case sensitive?
+normalize_git_url <- function(url){
+  url <- sub("\\.git$", "", url)
+  url <- sub("/$", "", url)
+  trimws(url)
+}
+
 update_gitmodules <- function(){
   registry <- lapply(read_registry_list(), function(x){c(x, registered = TRUE)})
   remotes <- read_remotes_list()
@@ -396,7 +404,7 @@ update_gitmodules <- function(){
     if(!length(x$url))
       stop("Field 'url' missing from registry entry")
     str <- sprintf('[submodule "%s"]\n\tpath = %s\n\turl = %s\n\tshallow = true',
-            x$package, x$package, x$url)
+            x$package, x$package, normalize_git_url(x$url))
     if(length(x$branch)){
       if(identical(x$branch, '*release')) # keep release we have currently
         x$branch <- get_release_version(x$package)
