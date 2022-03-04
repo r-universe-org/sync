@@ -266,10 +266,15 @@ update_one_package <- function(x, update_pkg_remotes = FALSE){
     stopifnot(basename(gert::git_info(repo = subrepo)$path) == pkg_dir)
     pkg_commit <- gert::git_log(repo = subrepo, max = 1)
     person <- utils::as.person(desc$maintainer)[1]
+    person$email <- normalize_email(person$email)
     sig <- paste(format(person, include = c("given", "family", "email")), unclass(pkg_commit$time))
     gert::git_commit(message = paste(desc$package, desc$version), author = sig)
     gert::git_push(verbose = TRUE)
   }
+}
+
+normalize_email <- function(x){
+  sub("[+].+@gmail.com", '@gmail.com', x)
 }
 
 update_remotes_json <- function(desc){
