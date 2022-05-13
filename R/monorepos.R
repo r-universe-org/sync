@@ -267,10 +267,18 @@ update_one_package <- function(x, update_pkg_remotes = FALSE){
     pkg_commit <- gert::git_log(repo = subrepo, max = 1)
     person <- utils::as.person(desc$maintainer)[1]
     person$email <- normalize_email(person$email)
-    sig <- paste(format(person, include = c("given", "family", "email")), unclass(pkg_commit$time))
+    sig <- format(person, include = c("given", "family", "email"))
+    validate_signature(sig) # validates email syntax from description
+    sig <- paste(sig, unclass(pkg_commit$time)) # add timestamp
     gert::git_commit(message = paste(desc$package, desc$version), author = sig)
     gert::git_push(verbose = TRUE)
   }
+}
+
+validate_signature <- function(str){
+  tryCatch(gert::git_signature_parse(str), error = function(e){
+    stop(sprintf("Error parsing '%s'\n%s", str, e$message))
+  })
 }
 
 normalize_email <- function(x){
