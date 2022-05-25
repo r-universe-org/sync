@@ -186,8 +186,8 @@ set_registry_commit_status <- function(monorepo_url, success){
   }
 }
 
-try_update_package <- function(x, update_pkg_remotes = FALSE){
-  tryCatch(update_one_package(x = x, update_pkg_remotes = update_pkg_remotes), error = function(e){
+try_update_package <- function(x, ...){
+  tryCatch(update_one_package(x = x, ...), error = function(e){
     gert::git_reset_hard()
     structure(x, class = 'update_failure', error = e$message)
   })
@@ -203,7 +203,7 @@ delete_one_package <- function(pkg_dir){
 }
 
 # Sync the registry packages with the monorepo
-update_one_package <- function(x, update_pkg_remotes = FALSE){
+update_one_package <- function(x, update_pkg_remotes = FALSE, cleanup_after = FALSE){
   pkg_dir <- x$package
   pkg_url <- x$url
   pkg_branch <- ifelse(length(x$branch), x$branch, 'HEAD')
@@ -272,6 +272,9 @@ update_one_package <- function(x, update_pkg_remotes = FALSE){
     sig <- paste(sig, unclass(pkg_commit$time)) # add timestamp
     gert::git_commit(message = paste(desc$package, desc$version), author = sig)
     gert::git_push(verbose = TRUE)
+    if(cleanup_after){
+      sys::exec_wait("git", c("submodule", "deinit", pkg_dir), std_out = FALSE)
+    }
   }
 }
 
@@ -382,7 +385,13 @@ print_message <- function(...){
 
 read_registry_list <- function(){
   monorepo_url <- gert::git_remote_info()$url
-  jsonfile <- sprintf('.registry/%s.json', sub("_", "@", basename(monorepo_url), fixed = TRUE))
+  universe <- sub("_", "@", basename(monorepo_url), fixed = TRUE)
+  if(universe == 'cran'){
+    df <- read.csv('.registry/crantogit.csv')
+    registry <- lapply(seq_len(nrow(df)), function(i){as.list(df[i,])})
+    return(registry)
+  }
+  jsonfile <- sprintf('.registry/%s.json', universe)
   registry <- if(file.exists(jsonfile)){
     jsonlite::read_json(jsonfile)
   } else {
