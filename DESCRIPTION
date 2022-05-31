@@ -16,7 +16,7 @@ Imports:
     ghapps,
     remotes
 Remotes: 
-    jeroen/ghapps
+    jeroen/ghapps,
     r-lib/gert
 RoxygenNote: 7.1.2
 License: Apache License 2.0
