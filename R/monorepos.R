@@ -239,7 +239,7 @@ update_one_package <- function(x, update_pkg_remotes = FALSE, cleanup_after = FA
         return()
       }
     }
-    if(!(pkg_dir %in% gert::git_status()$file) && grepl(remote_head, submodule_head, fixed = TRUE)){
+    if(!(pkg_dir %in% gert::git_status(pathspec = pkg_dir)$file) && grepl(remote_head, submodule_head, fixed = TRUE)){
       print_message("Submodule %s unchanged (%s)", pkg_dir, remote_head)
       return()
     }
@@ -248,7 +248,7 @@ update_one_package <- function(x, update_pkg_remotes = FALSE, cleanup_after = FA
     sys::exec_wait("git", c("submodule", "update", "--init", pkg_dir))
   }
   gert::git_add(pkg_dir)
-  if(!any(gert::git_status()$staged)){
+  if(nrow(gert::git_status(staged = TRUE, pathspec = pkg_dir)) == 0){
     print_message("Submodule '%s' already up-to-date", pkg_dir)
   } else {
     r_pkg_dir <- ifelse(length(x$subdir) > 0, file.path(pkg_dir, x$subdir), pkg_dir)

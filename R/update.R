@@ -1,3 +1,22 @@
+#' @export
+#' @rdname sync
+update_submodules <- function(path = '.', skip = '.registry'){
+  submodules <- gert::git_submodule_list(repo = path)
+  submodules$upstream <- remote_heads_many(submodules$url)
+  for(i in seq_len(nrow(submodules))){
+    info <- as.list(submodules[i,])
+    if(info$path %in% skip) next
+    if(info$upstream == info$head){
+      print_message("Submodule '%s' is up-to-date", info$path)
+    } else if(is.na(info$upstream) || !nchar(info$upstream)){
+      print("Failed to get upstream commit for '%s' (repo deleted?)", info$path)
+    } else {
+      print_message("Updating submodule '%s' to %s", info$path, info$upstream)
+      gert::git_submodule_set_to(info$path, info$upstream, checkout = FALSE, repo = path)
+    }
+  }
+}
+
 # Spec: https://www.git-scm.com/docs/http-protocol#_discovering_references
 raw_remote_references <- function(repo){
   url <- sprintf('%s/info/refs?service=git-upload-pack', repo)
@@ -39,18 +58,4 @@ remote_heads_many <- function(repos, verbose = FALSE){
   })
   curl::multi_run(pool = pool)
   out
-}
-
-update_submodules <- function(repo = '.'){
-  submodules <- gert::git_submodule_list(repo = repo)
-  submodules$upstream <- remote_heads_many(submodules$url)
-  for(i in seq_len(nrow(submodules))){
-    info <- as.list(submodules[i,])
-    if(info$upstream == info$head){
-      print_message("Submodule '%s' is up-to-date", info$path)
-    } else {
-      print_message("Updating submodule '%s' to %s", info$path, info$upstream)
-      gert::git_submodule_set_to(info$path, info$upstream, checkout = FALSE, repo = repo)
-    }
-  }
 }
