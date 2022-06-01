@@ -43,7 +43,7 @@ update_registry <- function(path = '.'){
     print_message("Adding new package '%s'", pkg$name)
     remove_submodule(pkg$name) # Just in case
     gert:::git_submodule_setup(pkg$url.new, pkg$name, repo = repo)
-    set_module_config(pkg$name, 'shallow', 'true')
+    #set_module_config(pkg$name, 'shallow', 'true')
     if(is_string(pkg$branch.new)){
       set_module_config(pkg$name, 'branch', pkg$branch.new)
     }
