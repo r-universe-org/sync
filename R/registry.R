@@ -94,6 +94,11 @@ set_module_config <- function(pkg, key, value){
   git_cmd('config', '--file=.gitmodules', sprintf('submodule.%s.%s', pkg, key), value)
 }
 
+get_module_config <- function(pkg, key){
+  res <- sys::exec_internal('git', c('config', '--file=.gitmodules', sprintf('submodule.%s.%s', pkg, key)), error = FALSE)
+  if(res$status == 0) sys::as_text(res$stdout)
+}
+
 is_string <- function(x){
   is.character(x) && !is.na(x) && nchar(x) > 0
 }

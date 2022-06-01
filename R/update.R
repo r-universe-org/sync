@@ -38,7 +38,8 @@ update_and_push <- function(info){
   pkg_dir <- info$path
   gert::git_submodule_set_to(pkg_dir, info$upstream, checkout = FALSE, repo = dirname(pkg_dir))
   git_cmd('submodule', 'update', '--init', '--recommend-shallow', pkg_dir)
-  r_pkg_dir <- ifelse(length(info$subdir) > 0, file.path(pkg_dir, info$subdir), pkg_dir)
+  subdir <- get_module_config(pkg_dir, 'subdir')
+  r_pkg_dir <- ifelse(length(subdir), file.path(pkg_dir, subdir), pkg_dir)
   desc <- get_description_data(r_pkg_dir)
   if(!identical(desc$package, pkg_dir)){
     git_cmd('submodule', 'update', '-f', '--init', pkg_dir)
