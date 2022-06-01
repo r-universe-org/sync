@@ -29,7 +29,10 @@ update_submodules <- function(path = '.', skip = '.registry'){
       print_message("Submodule '%s' is up-to-date", info$path)
     } else  {
       print_message("Updating submodule '%s' to %s", info$path, info$upstream)
-      update_and_push(info)
+      tryCatch(update_and_push(info), error = function(e){
+        cat(conditionMessage(e), '\n', file = stderr())
+        git_cmd('submodule', 'update', '-f', '--init', info$path)
+      })
     }
   }
 }
