@@ -23,11 +23,11 @@ update_submodules <- function(path = '.', skip = '.registry'){
   for(i in seq_len(nrow(submodules))){
     info <- as.list(submodules[i,])
     if(info$path %in% skip) next
-    if(info$upstream == info$head){
+    if(is.na(info$upstream) || !nchar(info$upstream)){
+      print_message("Failed to get upstream commit for '%s' (repo deleted?)", info$path)
+    } else if(info$upstream == info$head){
       print_message("Submodule '%s' is up-to-date", info$path)
-    } else if(is.na(info$upstream) || !nchar(info$upstream)){
-      print("Failed to get upstream commit for '%s' (repo deleted?)", info$path)
-    } else {
+    } else  {
       print_message("Updating submodule '%s' to %s", info$path, info$upstream)
       update_and_push(info)
     }
