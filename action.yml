@@ -4,8 +4,12 @@ inputs:
   monorepo_url:
     description: 'Git URL with monorepo'
     required: false
+  quick:
+    description: 'Use the new quick update'
+    required: false
 runs:
   using: 'docker'
   image: 'docker://runiverse/sync'
   args:
     - ${{ inputs.monorepo_url }}
+    - ${{ inputs.quick }}

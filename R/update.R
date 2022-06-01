@@ -7,6 +7,14 @@ update_local <- function(path = '.'){
 
 #' @export
 #' @rdname sync
+update_remote <- function(url){
+  path <- gert::git_clone(url)
+  withr::local_dir(path)
+  update_local()
+}
+
+#' @export
+#' @rdname sync
 update_submodules <- function(path = '.', skip = '.registry'){
   withr::local_dir(path)
   repo <- gert::git_open(path)

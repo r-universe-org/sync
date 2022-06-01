@@ -19,7 +19,7 @@ update_registry <- function(path = '.'){
   registry_commit <- gert::git_log(repo = I('.registry'), max = 1)
 
   # read registry
-  universe <- basename(path)
+  universe <- basename(normalizePath(path))
   registry <- if(universe == 'cran'){
     utils::read.csv('.registry/crantogit.csv')
   } else {
