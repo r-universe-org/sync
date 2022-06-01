@@ -3,7 +3,7 @@ description: 'Synchronize monorepo with registry'
 inputs:
   monorepo_url:
     description: 'Git URL with monorepo'
-    required: true
+    required: false
 runs:
   using: 'docker'
   image: 'docker://runiverse/sync'
