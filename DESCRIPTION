@@ -14,7 +14,8 @@ Imports:
     gert,
     gh,
     ghapps,
-    remotes
+    remotes,
+    withr
 Remotes: 
     jeroen/ghapps
 RoxygenNote: 7.1.2
