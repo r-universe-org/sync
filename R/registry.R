@@ -70,6 +70,8 @@ update_registry <- function(path = '.'){
   status <- gert::git_status(staged = TRUE)
   if('.gitmodules' %in% status$file){
     status <- gert::git_add('.registry')
+    gert::git_commit(message = "Sync registry", registry_commit$author)
+    gert::git_push(verbose = TRUE)
   } else {
     print_message("No relevant changes in registry")
     git_cmd('submodule', 'update', '-f', '--init', '.registry')
