@@ -1,7 +1,16 @@
 #' @export
 #' @rdname sync
+update_local <- function(path = '.'){
+  update_registry(path = path)
+  update_submodules(path = path)
+}
+
+#' @export
+#' @rdname sync
 update_submodules <- function(path = '.', skip = '.registry'){
-  submodules <- gert::git_submodule_list(repo = path)
+  withr::local_dir(path)
+  repo <- gert::git_open(path)
+  submodules <- gert::git_submodule_list(repo = repo)
   submodules$upstream <- remote_heads_many(submodules$url)
   for(i in seq_len(nrow(submodules))){
     info <- as.list(submodules[i,])
@@ -12,9 +21,32 @@ update_submodules <- function(path = '.', skip = '.registry'){
       print("Failed to get upstream commit for '%s' (repo deleted?)", info$path)
     } else {
       print_message("Updating submodule '%s' to %s", info$path, info$upstream)
-      gert::git_submodule_set_to(info$path, info$upstream, checkout = FALSE, repo = path)
+      update_and_push(info)
     }
   }
+}
+
+update_and_push <- function(info){
+  pkg_dir <- info$path
+  gert::git_submodule_set_to(pkg_dir, info$upstream, checkout = FALSE, repo = dirname(pkg_dir))
+  git_cmd('submodule', 'update', '--init',  pkg_dir)
+  r_pkg_dir <- ifelse(length(info$subdir) > 0, file.path(pkg_dir, info$subdir), pkg_dir)
+  desc <- get_description_data(r_pkg_dir)
+  if(!identical(desc$package, pkg_dir)){
+    git_cmd('submodule', 'update', '-f', '--init', pkg_dir)
+    stop(sprintf("Package '%s' from registry does not match package name in description file: '%s'", pkg_dir, desc$package))
+  }
+  subrepo <- gert::git_open(pkg_dir)
+  stopifnot(basename(gert::git_info(repo = subrepo)$path) == pkg_dir)
+  pkg_commit <- gert::git_log(repo = subrepo, max = 1)
+  person <- utils::as.person(desc$maintainer)[1]
+  person$email <- normalize_email(person$email)
+  sig <- format(person, include = c("given", "family", "email"))
+  validate_signature(sig) # validates email syntax from description
+  sig <- paste(sig, unclass(pkg_commit$time)) # add timestamp
+  gert::git_commit(message = paste(desc$package, desc$version), author = sig)
+  gert::git_push(verbose = TRUE)
+  sys::exec_wait("git", c("submodule", "deinit", pkg_dir), std_out = FALSE)
 }
 
 # Spec: https://www.git-scm.com/docs/http-protocol#_discovering_references

@@ -3,12 +3,15 @@
 \name{update_registry}
 \alias{update_registry}
 \alias{sync}
+\alias{update_local}
 \alias{update_submodules}
 \title{Update the CRAN repo}
 \usage{
 update_registry(path = ".")
 
-update_submodules(path = ".", skip = ".registry")
+update_local(path = ".")
+
+update_submodules(path = ".", skip = ".registry", push = FALSE)
 }
 \arguments{
 \item{path}{path to monorepo}
