@@ -189,6 +189,7 @@ set_registry_commit_status <- function(monorepo_url, success){
 try_update_package <- function(x, ...){
   tryCatch(update_one_package(x = x, ...), error = function(e){
     gert::git_reset_hard()
+    cat("ERROR", e$message, '\n', file = stderr())
     structure(x, class = 'update_failure', error = e$message)
   })
 }
