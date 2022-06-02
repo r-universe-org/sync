@@ -59,6 +59,7 @@ update_and_push <- function(info){
   gert::git_commit(message = paste(desc$package, desc$version), author = sig)
   gert::git_push(verbose = TRUE)
   sys::exec_wait("git", c("submodule", "deinit", pkg_dir), std_out = FALSE)
+  unlink(file.path('.git/modules', pkg_dir), recursive = TRUE, force = TRUE)
 }
 
 # Spec: https://www.git-scm.com/docs/http-protocol#_discovering_references
