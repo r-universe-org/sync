@@ -26,7 +26,7 @@ update_submodules <- function(path = '.', skip = '.registry'){
     if(is.na(info$upstream) || !nchar(info$upstream)){
       print_message("Failed to get upstream commit for '%s' (repo deleted?)", info$path)
     } else if(info$upstream == info$head){
-      print_message("Submodule '%s' is up-to-date", info$path)
+      #print_message("Submodule '%s' is up-to-date", info$path)
     } else  {
       print_message("Updating submodule '%s' to %s", info$path, info$upstream)
       tryCatch(update_and_push(info), error = function(e){
