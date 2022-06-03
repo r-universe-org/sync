@@ -88,7 +88,7 @@ parse_raw_gitpack <- function(buf){
   substring(refs, 5)
 }
 
-remote_heads_many <- function(repos, verbose = FALSE){
+remote_heads_many <- function(repos, verbose = TRUE){
   pool <- curl::new_pool()
   len <- length(repos)
   out <- character(len)
@@ -103,7 +103,8 @@ remote_heads_many <- function(repos, verbose = FALSE){
       out[k] <<- ifelse(length(head), sub(" HEAD", "", head, fixed = TRUE), NA_character_)
       if(verbose) {
         completed <<- completed + 1
-        cat(sprintf("\r %d/%d", as.integer(completed), as.integer(len)))
+        if(completed %% 100 == 0)
+        cat(sprintf("\rScanning for changes... %d/%d", as.integer(completed), as.integer(len)))
       }
     }, pool = pool)
   })
