@@ -8,8 +8,10 @@ update_local <- function(path = '.'){
 #' @export
 #' @rdname sync
 update_remote <- function(url){
-  path <- gert::git_clone(url)
-  withr::local_dir(path)
+  #libgit2 is super slow with submodules
+  #path <- gert::git_clone(url)
+  git_cmd('clone', url)
+  withr::local_dir(basename(url))
   update_local()
 }
 
