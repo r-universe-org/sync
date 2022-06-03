@@ -77,7 +77,13 @@ parse_raw_gitpack <- function(buf){
   stopifnot(grepl('^[0-9a-f]{4}#', txt[1]))
   stopifnot(grepl('service=', txt[1]))
   stopifnot(utils::tail(txt, 1) == '0000')
-  refs <- tail(head(txt, -1), -1)
+  refs <- head(txt, -1)
+  if(grepl("git-upload-pack0000", txt[1])){
+    # bitbucket.org seems to omit LF after 1st line
+    refs[1] <- sub('.*git-upload-pack', "", refs[1])
+  } else {
+    refs <- tail(refs, -1)
+  }
   refs[1] <- sub("^0000", "", refs[1])
   substring(refs, 5)
 }
