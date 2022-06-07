@@ -12,6 +12,7 @@ update_remote <- function(url){
   #path <- gert::git_clone(url)
   git_cmd('clone', url)
   withr::local_dir(basename(url))
+  update_workflows('cran')
   update_local()
 }
 

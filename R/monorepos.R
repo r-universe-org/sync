@@ -39,29 +39,8 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
     print_message("No GH_APP_KEY found, skipping app checks")
   }
 
-  # Sync the workflow files
-  workflows <- tempfile()
-  gert::git_clone('https://github.com/r-universe-org/workflows', workflows)
-  if(monorepo_name == "test"){
-    print_message("This is the 'test' universe. Looking for a 'test' branch in workflows.")
-    tryCatch(gert::git_branch_checkout('test', repo = I(workflows)), error = function(e){
-      print_message("No special 'test' workflows currently. Using defaults.")
-    })
-  }
-  workflow_commit <- gert::git_log(repo = I(workflows), max = 1)
-  infiles <- list.files(workflows, full.names = TRUE)
-  destfiles <- file.path('.github/workflows', basename(infiles))
-  unlink(".github/workflows/*")
-  file.copy(infiles, destfiles)
-  gert::git_add(".github")
-  if(any(gert::git_status()$staged)){
-    changed_files <- paste(gert::git_status(staged = TRUE)$file, collapse = ', ')
-    print_message("Committing changes for: %s", changed_files)
-    gert::git_commit(message = paste("GHA update:", trimws(workflow_commit$message)), workflow_commit$author)
-    gert::git_push(verbose = TRUE)
-  } else {
-    print_message("GHA workflows are up-to-date")
-  }
+  # Check for changes in GHA scripts
+  update_workflows(monorepo_name)
 
   # Consider switching to personal registry
   personal_registry <- paste0(monorepo_name, '/universe')
@@ -596,4 +575,29 @@ switch_to_registry <- function(repo_name, validate = TRUE){
       stop("The package.json file does not have expected 'package and' 'url' fields")
   }
   gert::git_add('.registry')
+}
+
+update_workflows <- function(monorepo_name){
+  workflows <- tempfile()
+  gert::git_clone('https://github.com/r-universe-org/workflows', workflows)
+  if(monorepo_name == "test"){
+    print_message("This is the 'test' universe. Looking for a 'test' branch in workflows.")
+    tryCatch(gert::git_branch_checkout('test', repo = I(workflows)), error = function(e){
+      print_message("No special 'test' workflows currently. Using defaults.")
+    })
+  }
+  workflow_commit <- gert::git_log(repo = I(workflows), max = 1)
+  infiles <- list.files(workflows, full.names = TRUE)
+  destfiles <- file.path('.github/workflows', basename(infiles))
+  unlink(".github/workflows/*")
+  file.copy(infiles, destfiles)
+  gert::git_add(".github")
+  if(any(gert::git_status()$staged)){
+    changed_files <- paste(gert::git_status(staged = TRUE)$file, collapse = ', ')
+    print_message("Committing changes for: %s", changed_files)
+    gert::git_commit(message = paste("GHA update:", trimws(workflow_commit$message)), workflow_commit$author)
+    gert::git_push(verbose = TRUE)
+  } else {
+    print_message("GHA workflows are up-to-date")
+  }
 }
