@@ -89,8 +89,11 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   }
 
   # First update all packages from the registry
+  skiplist <- submodules_up_to_date()
+  print_message("Submodules up-to-date:\n %s", paste(skiplist, collapse = '\n '))
   registry <- read_registry_list()
-  results1 <- lapply(registry, try_update_package, update_pkg_remotes = TRUE)
+  dirty <- Filter(function(x){is.na(match(x$package, skiplist))}, registry)
+  results1 <- lapply(dirty, try_update_package, update_pkg_remotes = TRUE)
 
   # Should not be needed but sometimes remotes linger around
   cleanup_remotes_list()
@@ -104,7 +107,8 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   # Filter duplicates
   remotes_pkgs <- vapply(remotes, function(x){x$package}, character(1))
   remotes_dups <- duplicated(remotes_pkgs)
-  results2 <- lapply(remotes[!remotes_dups], try_update_package)
+  dirty_remotes <- Filter(function(x){is.na(match(x$package, skiplist))}, remotes[!remotes_dups])
+  results2 <- lapply(dirty_remotes, try_update_package)
 
   # Finally get rid of deleted packages
   packages <- vapply(c(registry, remotes), function(x){x$package}, character(1))

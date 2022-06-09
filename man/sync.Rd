@@ -6,6 +6,7 @@
 \alias{update_local}
 \alias{update_remote}
 \alias{update_submodules}
+\alias{submodules_up_to_date}
 \title{Update the CRAN repo}
 \usage{
 update_registry(path = ".")
@@ -15,6 +16,8 @@ update_local(path = ".")
 update_remote(url)
 
 update_submodules(path = ".", skip = ".registry")
+
+submodules_up_to_date(path = ".")
 }
 \arguments{
 \item{path}{path to monorepo}

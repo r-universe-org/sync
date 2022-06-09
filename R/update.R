@@ -40,6 +40,17 @@ update_submodules <- function(path = '.', skip = '.registry'){
   }
 }
 
+#' @export
+#' @rdname sync
+submodules_up_to_date <- function(path = '.'){
+  withr::local_dir(path)
+  repo <- gert::git_open(path)
+  submodules <- gert::git_submodule_list(repo = repo)
+  submodules$upstream <- remote_heads_many(submodules$url)
+  isok <- which(submodules$upstream == submodules$head)
+  submodules$path[isok]
+}
+
 update_and_push <- function(info){
   pkg_dir <- info$path
   gert::git_submodule_set_to(pkg_dir, info$upstream, checkout = FALSE, repo = dirname(pkg_dir))
