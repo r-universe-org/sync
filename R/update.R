@@ -117,11 +117,12 @@ remote_heads_many <- function(repos, verbose = TRUE){
       out[k] <<- ifelse(length(head), sub(" HEAD", "", head, fixed = TRUE), NA_character_)
       if(verbose) {
         completed <<- completed + 1
-        if(completed %% 100 == 0)
-        cat(sprintf("\rScanning for changes... %d/%d", as.integer(completed), as.integer(len)))
+        if((len-completed) %% 10 == 0)
+          cat(sprintf("\rScanning for changes... %d/%d", as.integer(completed), as.integer(len)), file = stderr())
       }
     }, pool = pool)
   })
   curl::multi_run(pool = pool)
+  cat("\n", file = stderr())
   out
 }
