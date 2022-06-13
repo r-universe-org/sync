@@ -46,7 +46,7 @@ submodules_up_to_date <- function(path = '.'){
   withr::local_dir(path)
   repo <- gert::git_open(path)
   submodules <- gert::git_submodule_list(repo = repo)
-  submodules$upstream <- remote_heads_many(submodules$url)
+  submodules$upstream <- remote_heads_many(submodules$url, submodules$branch)
   isok <- which(submodules$upstream == submodules$head)
   submodules$path[isok]
 }
