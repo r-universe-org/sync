@@ -34,6 +34,7 @@ update_registry <- function(path = '.'){
   for(pkg in pkgs_rm){
     print_message("Removing package '%s'", pkg)
     remove_submodule(pkg)
+    update_remotes_json(desc = list(package = pkg))
   }
 
   # Find newly added packages
@@ -66,7 +67,7 @@ update_registry <- function(path = '.'){
     set_module_config(pkg$name, 'branch', pkg$branch.new)
   }
 
-  gert::git_add(".gitmodules")
+  gert::git_add(".gitmodules", '.remotes.json')
   status <- gert::git_status(staged = TRUE)
   if('.gitmodules' %in% status$file){
     status <- gert::git_add('.registry')
