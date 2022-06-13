@@ -22,7 +22,7 @@ update_submodules <- function(path = '.', skip = '.registry'){
   withr::local_dir(path)
   repo <- gert::git_open(path)
   submodules <- gert::git_submodule_list(repo = repo)
-  submodules$upstream <- remote_heads_many(submodules$url)
+  submodules$upstream <- remote_heads_many(submodules$url, submodules$branch)
   for(i in seq_len(nrow(submodules))){
     info <- as.list(submodules[i,])
     if(info$path %in% skip) next
@@ -110,7 +110,7 @@ remote_heads_many <- function(repos, refs = NULL, verbose = TRUE){
   lapply(seq_len(len), function(i){
     k <- i
     url <- sprintf('%s/info/refs?service=git-upload-pack', repos[i])
-    ref <- ifelse(length(refs), refs[i], "HEAD")
+    ref <- ifelse(length(refs) && !is.na(refs[i]), refs[i], "HEAD")
     h <- curl::new_handle(useragent = 'git/2.35.1.windows.2', failonerror = TRUE)
     curl::curl_fetch_multi(url, handle = h, done = function(res){
       txt <- parse_raw_gitpack(res$content)
