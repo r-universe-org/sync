@@ -119,7 +119,7 @@ remote_heads_many <- function(repos, refs = NULL, verbose = TRUE){
       out[k] <<- ifelse(length(match), sub(" .*$", "", match), NA_character_)
       if(verbose) {
         completed <<- completed + 1
-        if((len-completed) %% 10 == 0)
+        if((len-completed) %% 100 == 0)
           cat(sprintf("\rScanning for changes... %d/%d", as.integer(completed), as.integer(len)), file = stderr())
       }
     }, pool = pool)
