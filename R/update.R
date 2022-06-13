@@ -102,7 +102,7 @@ parse_raw_gitpack <- function(buf){
   substring(refs, 5)
 }
 
-remote_heads_many <- function(repos, verbose = TRUE){
+remote_heads_many <- function(repos, refs = NULL, verbose = TRUE){
   pool <- curl::new_pool()
   len <- length(repos)
   out <- character(len)
@@ -110,11 +110,13 @@ remote_heads_many <- function(repos, verbose = TRUE){
   lapply(seq_len(len), function(i){
     k <- i
     url <- sprintf('%s/info/refs?service=git-upload-pack', repos[i])
+    ref <- ifelse(length(refs), refs[i], "HEAD")
     h <- curl::new_handle(useragent = 'git/2.35.1.windows.2', failonerror = TRUE)
     curl::curl_fetch_multi(url, handle = h, done = function(res){
       txt <- parse_raw_gitpack(res$content)
-      head <- grep("HEAD$", txt, value = TRUE)
-      out[k] <<- ifelse(length(head), sub(" HEAD", "", head, fixed = TRUE), NA_character_)
+      pattern <- ifelse(ref=='HEAD', 'HEAD$', sprintf("\\/%s$", ref))
+      match <- grep(pattern, txt, value = TRUE)
+      out[k] <<- ifelse(length(match), sub(" .*$", "", match), NA_character_)
       if(verbose) {
         completed <<- completed + 1
         if((len-completed) %% 10 == 0)
