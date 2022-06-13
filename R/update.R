@@ -65,7 +65,7 @@ update_and_push <- function(info){
   subrepo <- gert::git_open(pkg_dir)
   stopifnot(basename(gert::git_info(repo = subrepo)$path) == pkg_dir)
   update_remotes_json(desc)
-  gert::git_add('.remotes.json')
+  git_cmd('add', '.remotes.json')
   #todo: update_gitmodules() here
   pkg_commit <- gert::git_log(repo = subrepo, max = 1)
   person <- utils::as.person(desc$maintainer)[1]
