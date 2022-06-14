@@ -371,7 +371,7 @@ read_registry_list <- function(){
   monorepo_url <- gert::git_remote_info()$url
   universe <- sub("_", "@", basename(monorepo_url), fixed = TRUE)
   if(universe == 'cran'){
-    df <- read.csv('.registry/crantogit.csv')
+    df <- utils::read.csv('.registry/crantogit.csv')
     registry <- lapply(seq_len(nrow(df)), function(i){as.list(df[i,])})
     return(registry)
   }
@@ -458,7 +458,7 @@ find_maintainer_safe <- function(authors){
   env$paste <- base::paste
   env$paste0 <- base::paste0
   env$as.person <- utils::as.person
-  env[['(']] = getFromNamespace('(', 'base') # Some people use e.g: role = ("aut")
+  env[['(']] = utils::getFromNamespace('(', 'base') # Some people use e.g: role = ("aut")
   env$person <- function(..., comment = NULL){
     utils::person(...)
   }
