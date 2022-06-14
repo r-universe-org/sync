@@ -17,9 +17,7 @@ trigger_syncs <- function(){
     return(dirty)
   })
   names(results) <- universes
-  out <- Filter(length, results)
-  print(str(out))
-  out
+  Filter(length, results)
 }
 
 needs_update <- function(universe){
