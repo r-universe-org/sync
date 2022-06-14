@@ -48,7 +48,19 @@ submodules_up_to_date <- function(path = '.'){
   submodules <- gert::git_submodule_list(repo = repo)
   submodules$upstream <- remote_heads_many(submodules$url, submodules$branch)
   isok <- which(submodules$upstream == submodules$head)
-  submodules$path[isok]
+  fine <- submodules$path[isok]
+  broken <- submodules[is.na(submodules$upstream),]
+  for(i in seq_len(nrow(broken))){
+    module <- as.list(broken[i,])
+    ishash <- grepl('^[0-9a-f]{6,100}$', tolower(module$branch)) & grepl(tolower(module$branch), tolower(module$head), fixed = TRUE)
+    if(ishash){
+      print_message("Assuming raw hash: for %s@%s", module$url, module$branch)
+      fine <- c(fine, module$path)
+    } else {
+      print_message("Failed to get upstream status for %s@%s", module$url, module$branch)
+    }
+  }
+  return(fine)
 }
 
 update_and_push <- function(info){

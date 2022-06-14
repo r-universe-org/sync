@@ -2,6 +2,7 @@
 
 export(submodules_up_to_date)
 export(sync_from_registry)
+export(trigger_syncs)
 export(update_local)
 export(update_registry)
 export(update_remote)
