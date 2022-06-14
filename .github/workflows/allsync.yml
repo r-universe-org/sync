@@ -1,0 +1,18 @@
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/60 * * * *'
+
+name: Sync all universes
+
+jobs:
+  update:
+    name: Update submodules
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Sync all universes
+        uses: r-universe-org/sync@master
+        with:
+          monorepo_url: 'all'
+        env:
+          GITHUB_PAT: ${{ secrets.GHPAT }}
