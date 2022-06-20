@@ -5,6 +5,7 @@
 #' @export
 trigger_syncs <- function(){
   universes <- list_universes()
+  git_cmd('clone', '--depth', '1', 'https://github.com/r-universe-org/cran-to-git', '/tmp/cran-to-git')
   results <- lapply(universes, function(universe){
     if(universe=='cran') return()
     dirty <- needs_update(universe)
@@ -30,7 +31,12 @@ needs_update <- function(universe){
   dirty <- setdiff(pkgs, skiplist)
   # If only the registry is dirty, we check if it actually needs an update
   if(identical('.registry', dirty)){
-    git_cmd("submodule", "update", "--init", "--remote", "--recommend-shallow", "-f", '.registry')
+    if(basename(gert::git_submodule_info('.registry')$url) == "cran-to-git" && file.exists('/tmp/cran-to-git')){
+      unlink(".registry", recursive = TRUE)
+      file.symlink('/tmp/cran-to-git', '.registry')
+    } else {
+      git_cmd("submodule", "update", "--init", "--remote", "--recommend-shallow", "-f", '.registry')
+    }
     update_gitmodules()
     if(is.na(match('.gitmodules', gert::git_status()$file))){
       dirty <- setdiff(dirty, '.registry') # No update needed
