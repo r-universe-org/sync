@@ -32,9 +32,8 @@ needs_update <- function(universe){
   if(identical('.registry', dirty)){
     git_cmd("submodule", "update", "--init", "--remote", "--recommend-shallow", "-f", '.registry')
     update_gitmodules()
-    status <- gert::git_status()$file
-    if(is.na(match('.gitmodules', dirty))){
-      dirty <- setdiff(dirty, '.registry')
+    if(is.na(match('.gitmodules', gert::git_status()$file))){
+      dirty <- setdiff(dirty, '.registry') # No update needed
     }
   }
   return(dirty)
