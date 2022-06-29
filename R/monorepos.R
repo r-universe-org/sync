@@ -555,7 +555,7 @@ not_a_fork <- function(repo){
 is_valid_registry <- function(repo_name){
   pkgsurl <- sprintf('https://raw.githubusercontent.com/%s/HEAD/packages.json', repo_name)
   success <- curl::curl_fetch_memory(pkgsurl)$status_code == 200
-  message("Checking if a registry exists at: ", repo_name, ": ", ifelse(success, 'yes', "no"))
+  print_message("Checking if a registry exists at %s: %s", repo_name, ifelse(success, 'yes', "no"))
   return(success && not_a_fork(repo_name))
 }
 
