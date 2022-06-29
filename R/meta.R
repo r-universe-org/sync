@@ -4,10 +4,9 @@
 #'
 #' @export
 trigger_syncs <- function(){
-  universes <- list_universes()
+  universes <- unique(list_universes())
   git_cmd('clone', '--depth', '1', 'https://github.com/r-universe-org/cran-to-git', '/tmp/cran-to-git')
   results <- lapply(universes, function(universe){
-    if(universe=='cran') return()
     dirty <- needs_update(universe)
     if(length(dirty)){
       print_message("[%s]: updates needed for %s", universe, paste(dirty, collapse = ', '))
@@ -29,9 +28,21 @@ needs_update <- function(universe){
   pkgs <- unique(c('.registry', list.files(), gert::git_submodule_list()$path))
   skiplist <- submodules_up_to_date()
   dirty <- setdiff(pkgs, skiplist)
+  is_cran_registry <- basename(gert::git_submodule_info('.registry')$url) == "cran-to-git"
+  if(is_cran_registry){
+    if(is_valid_registry(paste0(universe, '/universe'))){
+      print_message("Might need to switch to custom packages.json")
+      return('.registry')
+    }
+  } else {
+    if(is_deleted_registry(paste0(universe, '/universe'))){
+      print_message("Maybe need to disable custom packages.json")
+      return('.registry')
+    }
+  }
   # If only the registry is dirty, we check if it actually needs an update
   if(identical('.registry', dirty)){
-    if(basename(gert::git_submodule_info('.registry')$url) == "cran-to-git" && file.exists('/tmp/cran-to-git')){
+    if(is_cran_registry && file.exists('/tmp/cran-to-git')){
       unlink(".registry", recursive = TRUE)
       file.symlink('/tmp/cran-to-git', '.registry')
     } else {
