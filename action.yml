@@ -9,7 +9,7 @@ inputs:
     required: false
 runs:
   using: 'docker'
-  image: 'docker://runiverse/sync'
+  image: 'docker://ghcr.io/r-universe-org/sync'
   args:
     - ${{ inputs.monorepo_url }}
     - ${{ inputs.quick }}
