@@ -591,7 +591,7 @@ update_workflows <- function(monorepo_name){
     })
   }
   workflow_commit <- gert::git_log(repo = I(workflows), max = 1)
-  infiles <- list.files(workflows, full.names = TRUE)
+  infiles <- list.files(workflows, pattern = 'yml$', full.names = TRUE)
   destfiles <- file.path('.github/workflows', basename(infiles))
   unlink(".github/workflows/*")
   file.copy(infiles, destfiles)
