@@ -6,7 +6,22 @@
 trigger_syncs <- function(){
   universes <- unique(list_universes())
   git_cmd('clone', '--depth', '1', 'https://github.com/r-universe-org/cran-to-git', '/tmp/cran-to-git')
-  results <- lapply(universes, function(universe){
+  results <- lapply(universes, check_and_trigger)
+  names(results) <- universes
+  out <- Filter(length, results)
+  print(out)
+  errors <- out[vapply(out, inherits, logical(1),  'try-error')]
+  if(length(errors)) {
+    for(i in seq_along(errors)){
+      print_message("ERROR updating %s: %s", names(errors[i]), errors[i])
+    }
+    stop("Failure syncing some universes")
+  }
+  print_message("All universes synced OK!")
+}
+
+check_and_trigger <- function(universe){
+  try({
     dirty <- needs_update(universe)
     if(length(dirty)){
       print_message("[%s]: updates needed for %s", universe, paste(dirty, collapse = ', '))
@@ -16,12 +31,12 @@ trigger_syncs <- function(){
     }
     return(dirty)
   })
-  names(results) <- universes
-  Filter(length, results)
 }
 
 needs_update <- function(universe){
-  git_cmd('clone', '--depth', '1', paste0('https://github.com/r-universe/', universe))
+  if(git_cmd('clone', '--depth', '1', paste0('https://github.com/r-universe/', universe))){
+    stop("Failed to clone: ", universe)
+  }
   fullpath <- normalizePath(universe)
   on.exit(unlink(fullpath, recursive = TRUE))
   withr::local_dir(universe)
