@@ -599,7 +599,7 @@ update_workflows <- function(monorepo_name){
   if(any(gert::git_status()$staged)){
     changed_files <- paste(gert::git_status(staged = TRUE)$file, collapse = ', ')
     print_message("Committing changes for: %s", changed_files)
-    gert::git_commit(message = paste("GHA update:", trimws(workflow_commit$message)), workflow_commit$author)
+    gert::git_commit(message = paste("GHA update:", trimws(workflow_commit$message)), 'r-universe bot <noreply@r-universe.dev>')
     gert::git_push(verbose = TRUE)
   } else {
     print_message("GHA workflows are up-to-date")
