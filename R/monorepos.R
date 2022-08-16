@@ -90,8 +90,11 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
 
   # First update all packages from the registry
   skiplist <- submodules_up_to_date()
-  print_message("Submodules up-to-date:\n %s", paste(skiplist, collapse = '\n '))
   registry <- read_registry_list()
+  forcecheck <- sapply(Filter(function(x){identical(x$branch, '*release')}, registry), function(x){x$package})
+  skiplist <- setdiff(skiplist, forcecheck)
+
+  print_message("Submodules up-to-date:\n %s", paste(skiplist, collapse = '\n '))
   dirty <- Filter(function(x){is.na(match(x$package, skiplist))}, registry)
   results1 <- lapply(dirty, try_update_package, update_pkg_remotes = TRUE)
 
