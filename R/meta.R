@@ -41,6 +41,7 @@ needs_update <- function(universe){
   on.exit(unlink(fullpath, recursive = TRUE))
   withr::local_dir(universe)
   pkgs <- unique(c('.registry', list.files(), gert::git_submodule_list()$path))
+  check_new_release_tags()
   skiplist <- submodules_up_to_date()
   dirty <- setdiff(pkgs, skiplist)
   is_cran_registry <- basename(gert::git_submodule_info('.registry')$url) == "cran-to-git"

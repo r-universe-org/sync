@@ -90,10 +90,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
 
   # First update all packages from the registry
   registry <- read_registry_list()
-  checkrls <- Filter(function(x){identical(x$branch, '*release')}, registry)
-  lapply(checkrls, function(x){
-    update_release_branch(x$package, x$url)
-  })
+  check_new_release_tags()
   skiplist <- submodules_up_to_date()
   print_message("Submodules up-to-date:\n %s", paste(skiplist, collapse = '\n '))
   dirty <- Filter(function(x){is.na(match(x$package, skiplist))}, registry)
@@ -610,5 +607,16 @@ update_workflows <- function(monorepo_name){
     gert::git_push(verbose = TRUE)
   } else {
     print_message("GHA workflows are up-to-date")
+  }
+}
+
+check_new_release_tags <- function(){
+  if(file.exists('.metadata.json')){
+    lst <- Filter(function(x){isTRUE(x$releasetag)}, jsonlite::read_json('.metadata.json'))
+    lapply(lst, function(x){
+      pkg <- x$package
+      info <- gert::git_submodule_info(pkg)
+      update_release_branch(pkg, info$url)
+    })
   }
 }
