@@ -416,10 +416,8 @@ update_gitmodules <- function(){
     str <- sprintf('[submodule "%s"]\n\tpath = %s\n\turl = %s\n\tshallow = true',
             x$package, x$package, normalize_git_url(x$url))
     if(length(x$branch)){
-      if(identical(x$branch, '*release')){ # keep release we have currently
+      if(identical(x$branch, '*release')) # keep release we have currently
         x$branch <- get_release_version(x$package)
-        str <- paste0(str, '\n\trelease = true')
-      }
       str <- paste0(str, '\n\tbranch = ', x$branch[1])
     }
     if(length(x$subdir))
@@ -484,7 +482,10 @@ write_metadata_json <- function(){
       return(test_if_package_on_cran(x))
     return(NA)
   }, logical(1))
-  df <- data.frame(package = packages, oncran = oncran)
+  isrelease <- vapply(registry, function(x){
+    ifelse(identical(x$branch, '*release'), TRUE, NA)
+  }, logical(1))
+  df <- data.frame(package = packages, oncran = oncran, release = isrelease)
   jsonlite::write_json(df, '.metadata.json', pretty = TRUE)
 }
 
