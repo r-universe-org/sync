@@ -485,7 +485,7 @@ write_metadata_json <- function(){
   isrelease <- vapply(registry, function(x){
     ifelse(identical(x$branch, '*release'), TRUE, NA)
   }, logical(1))
-  df <- data.frame(package = packages, oncran = oncran, release = isrelease)
+  df <- data.frame(package = packages, oncran = oncran, releasetag = isrelease)
   jsonlite::write_json(df, '.metadata.json', pretty = TRUE)
 }
 
