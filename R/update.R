@@ -132,6 +132,15 @@ remote_heads_many <- function(repos, refs = NULL, verbose = TRUE){
       pattern <- ifelse(ref=='HEAD', 'HEAD$', sprintf("\\/%s$", ref))
       match <- grep(pattern, txt, value = TRUE)
       out[k] <<- ifelse(length(match), sub(" .*$", "", match), NA_character_)
+
+      # In case of annotated tags, we actually need the dereferenced ^{} value
+      if(!identical(ref, 'HEAD')){
+        match <- grep(sprintf('refs/tags/%s^{}', ref), txt, fixed = TRUE, value = TRUE)
+        if(length(match)){
+          out[k] <<- sub(" .*$", "", match)
+        }
+      }
+
       if(verbose) {
         completed <<- completed + 1
         if((len-completed) %% 100 == 0)
