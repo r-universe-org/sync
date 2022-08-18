@@ -416,8 +416,10 @@ update_gitmodules <- function(){
     str <- sprintf('[submodule "%s"]\n\tpath = %s\n\turl = %s\n\tshallow = true',
             x$package, x$package, normalize_git_url(x$url))
     if(length(x$branch)){
-      if(identical(x$branch, '*release')) # keep release we have currently
+      if(identical(x$branch, '*release')){ # keep release we have currently
         x$branch <- get_release_version(x$package)
+        str <- paste0(str, '\n\trelease = true')
+      }
       str <- paste0(str, '\n\tbranch = ', x$branch[1])
     }
     if(length(x$subdir))
