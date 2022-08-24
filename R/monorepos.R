@@ -242,6 +242,9 @@ update_one_package <- function(x, update_pkg_remotes = FALSE, cleanup_after = FA
       delete_one_package(pkg_dir)
       stop(sprintf("Package '%s' from registry does not match package name in description file: '%s'", pkg_dir, desc$package))
     }
+    if('config/runiverse/noindex' %in% names(desc)){
+      stop(sprintf("Package '%s' has noindex in description file", desc$package))
+    }
     if(isTRUE(update_pkg_remotes)){
       update_remotes_json(desc)
       update_gitmodules()
