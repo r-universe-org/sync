@@ -4,12 +4,13 @@ inputs:
   monorepo_url:
     description: 'Git URL with monorepo'
     required: false
-  quick:
-    description: 'Use the new quick update'
+  update_all_workflows:
+    description: 'Force updating all GHA workflow scripts'
     required: false
 runs:
   using: 'docker'
   image: 'docker://ghcr.io/r-universe-org/sync'
   args:
     - ${{ inputs.monorepo_url }}
-    - ${{ inputs.quick }}
+  env:
+    UPDATE_ALL_WORKFLOWS: ${{ inputs.update_all_workflows }}

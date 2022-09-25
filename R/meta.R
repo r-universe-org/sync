@@ -6,6 +6,7 @@
 trigger_syncs <- function(){
   universes <- unique(list_universes())
   git_cmd('clone', '--depth', '1', 'https://github.com/r-universe-org/cran-to-git', '/tmp/cran-to-git')
+  git_cmd('clone', '--depth', '1', 'https://github.com/r-universe-org/workflows', '/tmp/workflows')
   results <- lapply(universes, check_and_trigger)
   names(results) <- universes
   out <- Filter(length, results)
@@ -44,6 +45,13 @@ needs_update <- function(universe){
   check_new_release_tags()
   skiplist <- submodules_up_to_date()
   dirty <- setdiff(pkgs, skiplist)
+  if(nchar(Sys.getenv('UPDATE_ALL_WORKFLOWS')) && file.exists('/tmp/workflows')){
+    file.copy(list.files('/tmp/workflows', full.names = TRUE, pattern = 'yml$'), '.github/workflows/', overwrite = TRUE)
+    if(any(grepl('^.github/workflows', gert::git_status()$file))){
+      dirty <- c(dirty, 'workflows')
+      print_message("Workflow files need updating for: %s", monorepo_name)
+    }
+  }
   is_cran_registry <- basename(gert::git_submodule_info('.registry')$url) == "cran-to-git"
   if(is_cran_registry){
     if(is_valid_registry(paste0(universe, '/universe'))){
