@@ -49,7 +49,9 @@ needs_update <- function(universe){
     file.copy(list.files('/tmp/workflows', full.names = TRUE, pattern = 'yml$'), '.github/workflows/', overwrite = TRUE)
     if(any(grepl('^.github/workflows', gert::git_status()$file))){
       dirty <- c(dirty, 'workflows')
-      print_message("Workflow files need updating for: %s", monorepo_name)
+      print_message("Workflow files need updating for: %s", universe)
+    } else {
+      print_message("Workflow files are up-to-date for: %s", universe)
     }
   }
   is_cran_registry <- basename(gert::git_submodule_info('.registry')$url) == "cran-to-git"
