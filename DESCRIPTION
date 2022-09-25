@@ -15,6 +15,7 @@ Imports:
     gh,
     ghapps,
     remotes,
+    rlang,
     withr
 Remotes: 
     jeroen/ghapps
