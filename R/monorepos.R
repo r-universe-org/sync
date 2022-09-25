@@ -619,7 +619,9 @@ check_new_release_tags <- function(){
     lapply(lst, function(x){
       pkg <- x$package
       info <- gert::git_submodule_info(pkg)
-      update_release_branch(pkg, info$url)
+      if(grepl('github.com', info$url, fixed = TRUE)){
+        update_release_branch(pkg, info$url)
+      }
     })
   }
 }
