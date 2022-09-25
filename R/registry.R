@@ -88,7 +88,7 @@ remove_submodule <- function(pkg){
 }
 
 git_cmd <- function(..., std_err = TRUE){
-  sys::exec_wait('git', args = c(...), std_err = std_err)
+  sys::exec_wait('git', args = c(...), std_err = std_err, timeout = 120)
 }
 
 set_module_config <- function(pkg, key, value){
