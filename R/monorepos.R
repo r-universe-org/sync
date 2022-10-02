@@ -313,6 +313,7 @@ get_all_remotes <- function(desc){
 
 # Recursively download description files and get remotes.
 # Skip already known packages to prevent infinite recursion.
+# Also skip 'CRAN' remotes
 get_recursive_remotes <- function(desc, via = NULL){
   via <- c(via, desc$package)
   if(!length(desc$remotes) || !nchar(desc$remotes))
@@ -322,6 +323,8 @@ get_recursive_remotes <- function(desc, via = NULL){
     info <- remotes::parse_repo_spec(x)
     info$username <- sub("^github::", "", info$username)
     if(info$repo %in% via)
+      return(NULL)
+    if(identical(tolower(info$username), 'cran'))
       return(NULL)
     desc <- get_github_description(info)
     out <- list(
