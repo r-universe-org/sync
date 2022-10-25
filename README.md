@@ -7,7 +7,7 @@ This action is used to update all workflows and submodules within a monorepo to 
 
 When this action runs in a monorepo (such as https://github.com/r-universe/ropensci), it roughly performs the following steps:
 
- 1. Update the `.github/workflows` from [r-universe-org/workflows](https://github.com/r-universe-org/workflows) if needed.
+ 1. Update the `.github/workflows` from [r-universe/workflows](https://github.com/r-universe/workflows) if needed.
  2. Check if the user has a custom `packages.json` in `https://github.com/{user}/universe`. Switch if needed.
  3. Update and check for changes in the `.registry` submodule and if any, add/remove corresponding package submodules
  4. For each of the package submodules in the monorepo, lookup upstream sha from the package git url/branch and test which of the package submodules should be updated.
@@ -15,7 +15,7 @@ When this action runs in a monorepo (such as https://github.com/r-universe/ropen
     - clone the upstream package git-url and checkout to the new sha.
     - read the package version and maintainer details from `DESCRIPTION` file (this also serves as a minimal check that the url actually contains an R package).
     - commit the new sha of the package submodule to the monorepo using the maintainer and version from the description as commit author/message.
-    - push this new commit to the monorepo. This will trigger the [build workflow](https://github.com/r-universe-org/workflows/blob/master/build.yml) for this package.
+    - push this new commit to the monorepo. This will trigger the [build workflow](https://github.com/r-universe/workflows/blob/master/build.yml) for this package.
     - also check for "Remotes" in the package description. If any remotes have changed, update the `.remotes` list and perform the same steps for the remotes packages.
     
 ## Global: meta sync
