@@ -151,7 +151,7 @@ set_registry_commit_status <- function(monorepo_url, success){
     tryCatch({
       repo <- sub("https?://github.com/", "", registry_repo)
       repo <- sub("\\.git$", "", repo)
-      token <- ghapps::gh_app_token(repo, app_id = '87942')
+      token <- ghapps::gh_app_token(repo)
       sha <- tryCatch({
         # try 'dirty' .registry repo HEAD, if unavail, use staged submodule state
         gert::git_info(I(".registry"))$commit
