@@ -43,12 +43,14 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   update_workflows(monorepo_name)
 
   # Consider switching to personal registry
-  personal_registry <- paste0(monorepo_name, '/universe')
-  current_registry <- gert::git_submodule_info(".registry")$url
+  current_registry <- url_to_repo(gert::git_submodule_info(".registry")$url)
+  personal_registry_repos <- c(sprintf('%s/universe', monorepo_name), sprintf('%s/%s.r-universe.dev', monorepo_name, monorepo_name))
   if(basename(current_registry) == "cran-to-git"){
-    if(is_valid_registry(personal_registry)){
-      switch_to_registry(personal_registry)
-    }
+    lapply(personal_registry_repos, function(x){
+      if(is_valid_registry(x)){
+        switch_to_registry(x)
+      }
+    })
   }
 
   # Sync with the user registry file (currently libgit2 does not support shallow clones, sadly)
@@ -56,7 +58,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
 
   # If this fails, check if the personal registry still exists
   if(res != 0){
-    if(basename(current_registry) == "universe" && is_deleted_registry(personal_registry)){
+    if(current_registry %in% personal_registry_repos && is_deleted_registry(current_registry)){
       switch_to_registry('r-universe-org/cran-to-git', validate = FALSE)
       sys::exec_wait("git", c("submodule", "update", "--init", "--remote", '.registry'))
     } else {
@@ -566,7 +568,11 @@ is_valid_registry <- function(repo_name){
   pkgsurl <- sprintf('https://raw.githubusercontent.com/%s/HEAD/packages.json', repo_name)
   success <- curl::curl_fetch_memory(pkgsurl)$status_code == 200
   print_message("Checking if a registry exists at %s: %s", repo_name, ifelse(success, 'yes', "no"))
-  return(success && not_a_fork(repo_name))
+  if(success && basename(repo_name) == 'universe'){
+    return(not_a_fork(repo_name))
+  } else {
+    return(success)
+  }
 }
 
 # specifically test for 404, not some temporary network error
@@ -627,4 +633,8 @@ check_new_release_tags <- function(){
       }
     })
   }
+}
+
+url_to_repo <- function(url){
+  sprintf('%s/%s', basename(dirname(url)), basename(url))
 }
