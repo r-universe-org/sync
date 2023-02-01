@@ -42,15 +42,11 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   # Check for changes in GHA scripts
   update_workflows(monorepo_name)
 
-  # Consider switching to personal registry
+  # Consider switching to a personal registry if available
   current_registry <- url_to_repo(gert::git_submodule_info(".registry")$url)
-  personal_registry_repos <- c(sprintf('%s/universe', monorepo_name), sprintf('%s/%s.r-universe.dev', monorepo_name, monorepo_name))
-  if(basename(current_registry) == "cran-to-git"){
-    lapply(personal_registry_repos, function(x){
-      if(is_valid_registry(x)){
-        switch_to_registry(x)
-      }
-    })
+  message("Registry is set to: ", current_registry)
+  if(basename(current_registry) != paste0(monorepo_name, '.r-universe.dev')){
+    update_registry_repo(monorepo_name, current_registry)
   }
 
   # Sync with the user registry file (currently libgit2 does not support shallow clones, sadly)
@@ -58,8 +54,11 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
 
   # If this fails, check if the personal registry still exists
   if(res != 0){
-    if(current_registry %in% personal_registry_repos && is_deleted_registry(current_registry)){
-      switch_to_registry('r-universe-org/cran-to-git', validate = FALSE)
+    if(basename(current_registry) != 'cran-to-git' && is_deleted_registry(current_registry)){
+      newrepo <- update_registry_repo(monorepo_name, current_registry)
+      if(is.null(newrepo)){
+        switch_to_registry('r-universe-org/cran-to-git', validate = FALSE)
+      }
       sys::exec_wait("git", c("submodule", "update", "--init", "--remote", '.registry'))
     } else {
       stop("Failure cloning .registry repository")
@@ -565,6 +564,9 @@ not_a_fork <- function(repo){
 }
 
 is_valid_registry <- function(repo_name){
+  if(repo_name == 'r-universe-org/cran-to-git'){
+    return(TRUE)
+  }
   pkgsurl <- sprintf('https://raw.githubusercontent.com/%s/HEAD/packages.json', repo_name)
   success <- curl::curl_fetch_memory(pkgsurl)$status_code == 200
   print_message("Checking if a registry exists at %s: %s", repo_name, ifelse(success, 'yes', "no"))
@@ -595,6 +597,24 @@ switch_to_registry <- function(repo_name, validate = TRUE){
       stop("The package.json file does not have expected 'package and' 'url' fields")
   }
   gert::git_add('.registry')
+}
+
+# Consider switching to personal registry
+update_registry_repo <- function(monorepo_name, current_registry){
+  personal_registry_repos <- c(
+    sprintf('%s/%s.r-universe.dev', monorepo_name, monorepo_name),
+    sprintf('%s/universe', monorepo_name))
+  for(x in personal_registry_repos){
+    if(is_valid_registry(x)){
+      if(current_registry != x){
+        switch_to_registry(x)
+      } else {
+        message("Keeping current registry: ", x)
+      }
+      return(x)
+    }
+  }
+  return(NULL)
 }
 
 update_workflows <- function(monorepo_name){
