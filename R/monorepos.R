@@ -601,6 +601,9 @@ switch_to_registry <- function(repo_name, validate = TRUE){
 
 # Consider switching to personal registry
 update_registry_repo <- function(monorepo_name, current_registry){
+  if(monorepo_name == 'ropensci'){
+    return('ropensci/roregistry')
+  }
   personal_registry_repos <- c(
     sprintf('%s/%s.r-universe.dev', monorepo_name, monorepo_name),
     sprintf('%s/universe', monorepo_name))
