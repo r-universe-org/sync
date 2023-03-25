@@ -92,6 +92,18 @@ git_cmd <- function(..., std_err = TRUE){
   sys::exec_wait('git', args = c(...), std_err = std_err, timeout = 60)
 }
 
+git_clone <- function(url, dest = NULL){
+  for(i in 1:3){
+    if(!git_cmd('clone', '--depth', '1', url, dest)){
+      return(TRUE)
+    }
+    message("Retrying to clone: ", url)
+    unlink(dest, recursive = TRUE)
+    Sys.sleep(3)
+  }
+  stop("Failed to clone: ", url)
+}
+
 set_module_config <- function(pkg, key, value){
   git_cmd('config', '--file=.gitmodules', sprintf('submodule.%s.%s', pkg, key), value)
 }
@@ -103,4 +115,21 @@ get_module_config <- function(pkg, key){
 
 is_string <- function(x){
   is.character(x) && !is.na(x) && nchar(x) > 0
+}
+
+retry <- function(x, times = 3, wait = 1){
+  cl <- substitute(x)
+  for(i in seq_len(times)){
+    tryCatch({
+      return(eval(cl))
+    }, error = function(err){
+      if(i < times){
+        message(sprintf("Error '%s' in %s: Retrying...", err$message, deparse(cl)))
+        Sys.sleep(wait)
+      } else {
+        err$message <- sprintf("%s. (tried %d times, giving up)", err$message, times)
+        stop(err)
+      }
+    })
+  }
 }
