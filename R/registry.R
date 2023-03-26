@@ -132,13 +132,14 @@ retry <- function(x, times = 3, wait = 1){
   cl <- substitute(x)
   for(i in seq_len(times)){
     tryCatch({
-      return(eval(cl))
+      return(eval.parent(cl))
     }, error = function(err){
       if(i < times){
         message(sprintf("Error '%s' in %s: Retrying...", err$message, deparse(cl)))
         Sys.sleep(wait)
       } else {
         err$message <- sprintf("%s. (tried %d times, giving up)", err$message, times)
+        err$call <- cl
         stop(err)
       }
     })

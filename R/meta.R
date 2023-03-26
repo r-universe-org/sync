@@ -36,7 +36,7 @@ check_and_trigger <- function(universe){
 }
 
 needs_update <- function(universe){
-  git_clone(paste0('https://github.com/r-universe/', universe))
+  retry(git_clone(paste0('https://github.com/r-universe/', universe)))
   fullpath <- normalizePath(universe)
   on.exit(unlink(fullpath, recursive = TRUE))
   withr::local_dir(universe)
@@ -77,7 +77,7 @@ needs_update <- function(universe){
       unlink(".registry", recursive = TRUE)
       file.symlink('/tmp/cran-to-git', '.registry')
     } else {
-      git_submodule_shallow('.registry')
+      retry(git_submodule_shallow('.registry'))
     }
     update_gitmodules()
     if(is.na(match('.gitmodules', gert::git_status()$file))){
