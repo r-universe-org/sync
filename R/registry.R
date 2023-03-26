@@ -104,6 +104,17 @@ git_clone <- function(url, dest = NULL){
   stop("Failed to clone: ", url)
 }
 
+git_submodule_shallow <- function(dest){
+  for(i in 1:3){
+    if(!git_cmd("submodule", "update", "--init", "--remote", "--recommend-shallow", "-f", dest)){
+      return(TRUE)
+    }
+    message("Retrying to submodule: ", dest)
+    Sys.sleep(3)
+  }
+  stop("Failed to init submodule: ", dest)
+}
+
 set_module_config <- function(pkg, key, value){
   git_cmd('config', '--file=.gitmodules', sprintf('submodule.%s.%s', pkg, key), value)
 }
