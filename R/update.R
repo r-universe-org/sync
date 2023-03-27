@@ -118,7 +118,7 @@ parse_raw_gitpack <- function(buf){
 }
 
 remote_heads_many <- function(repos, refs = NULL, verbose = TRUE){
-  pool <- curl::new_pool()
+  pool <- curl::multi_set(multiplex = FALSE) # use default pool
   len <- length(repos)
   out <- character(len)
   completed <- 0
@@ -146,7 +146,7 @@ remote_heads_many <- function(repos, refs = NULL, verbose = TRUE){
         if((len-completed) %% 100 == 0)
           cat(sprintf("\rScanning for changes... %d/%d", as.integer(completed), as.integer(len)), file = stderr())
       }
-    }, pool = pool)
+    }, fail = message, pool = pool)
   })
   curl::multi_run(pool = pool)
   cat("\n", file = stderr())
