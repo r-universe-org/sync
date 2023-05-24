@@ -26,6 +26,10 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
     tryCatch({
       out <- ghapps::gh_app_installation_info(monorepo_name)
       ghapp <- out[c('id', 'created_at', 'repository_selection', 'permissions')]
+      if(ghapp$repository_selection == 'selected'){
+        repolist <- ghapps::gh_app_installation_repositories(monorepo_name)
+        ghapp$repositories <- I(vapply(repolist$repositories,function(x)x$name, character(1)))
+      }
       jsonlite::write_json(ghapp, '.ghapp', pretty = TRUE, auto_unbox = TRUE)
     }, http_error_404 = function(e){
       unlink('.ghapp')
