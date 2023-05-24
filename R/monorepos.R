@@ -77,8 +77,8 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   # Very basic fair use check for now
   registry_name <- basename(gert::git_submodule_info(".registry")$url)
   if(!(registry_name %in% c("roregistry", "cran-to-git"))){
-    if(length(read_registry_list()) > 100){
-      stop("Personal universes are currently limited to 100 packages")
+    if(length(read_registry_list()) > 150){
+      stop("Personal universes are currently limited to 150 packages")
     }
   }
   gert::git_add(c('.gitmodules', '.metadata.json'))
