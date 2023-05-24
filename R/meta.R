@@ -44,6 +44,8 @@ needs_update <- function(universe){
   check_new_release_tags()
   skiplist <- submodules_up_to_date()
   dirty <- setdiff(pkgs, skiplist)
+  if(file.exists('.metadata.json'))
+    dirty <- '.metadata.json'
   if(nchar(Sys.getenv('UPDATE_ALL_WORKFLOWS')) && file.exists('/tmp/workflows')){
     file.copy(list.files('/tmp/workflows', full.names = TRUE, pattern = 'yml$'), '.github/workflows/', overwrite = TRUE)
     if(any(grepl('^.github/workflows', gert::git_status()$file))){
