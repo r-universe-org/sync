@@ -309,6 +309,10 @@ write_remotes_json <- function(all_remotes){
 
 get_all_remotes <- function(desc){
   out <- get_recursive_remotes(desc)
+  # Some package networks with extensive remotes structures depend on others via many paths
+  # for example 'displayr'. We only record the first one to prevent remotes.json from blowing up.
+  dups <- duplicated(vapply(out, function(x) x$package, character(1)))
+  out <- out[!dups]
   lapply(out, function(x){
     x$from = desc$package
     x$via <- I(x$via)
@@ -331,7 +335,7 @@ get_recursive_remotes <- function(desc, via = NULL){
       return(NULL)
     if(identical(tolower(info$username), 'cran'))
       return(NULL)
-    desc <- get_github_description(info)
+    desc <- get_github_description_cached(info)
     out <- list(
       package = desc$package,
       url = sprintf("https://github.com/%s/%s", info$username, info$repo),
@@ -360,6 +364,18 @@ get_github_description <- function(x){
   curl::curl_download(url, tmp)
   read_description_file(tmp)
 }
+
+get_github_description_cached <- local({
+  cache <- new.env(parent = emptyenv())
+  function(x){
+    key <- digest::digest(x)
+    if(!exists(key, envir = cache)){
+      val <- get_github_description(x)
+      assign(key, val, envir = cache)
+    }
+    get0(key, cache)
+  }
+})
 
 read_remotes_list <- function(){
   if(file.exists('.remotes.json'))
