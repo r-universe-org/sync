@@ -333,8 +333,12 @@ get_recursive_remotes <- function(desc, via = NULL){
     info$username <- sub("^github::", "", info$username)
     if(info$repo %in% via)
       return(NULL)
-    if(identical(tolower(info$username), 'cran'))
-      return(NULL)
+    if(identical(tolower(info$username), 'cran')){
+      # Ignore /cran remote if package is on CRAN (not archived)
+      if(exists_on_cran(info$repo)){
+        return(NULL)
+      }
+    }
     desc <- get_github_description_cached(info)
     out <- list(
       package = desc$package,
@@ -363,6 +367,11 @@ get_github_description <- function(x){
   print_message(paste("Looking for remotes in:", url))
   curl::curl_download(url, tmp)
   read_description_file(tmp)
+}
+
+exists_on_cran <- function(pkg){
+  req <- curl::curl_fetch_memory(sprintf('https://cran.r-project.org/web/packages/%s/DESCRIPTION', pkg))
+  return(req$status_code == 200)
 }
 
 get_github_description_cached <- local({
