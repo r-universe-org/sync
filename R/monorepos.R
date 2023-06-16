@@ -245,7 +245,13 @@ update_one_package <- function(x, update_pkg_remotes = FALSE, cleanup_after = FA
     desc <- get_description_data(r_pkg_dir)
     if(!identical(desc$package, pkg_dir)){
       delete_one_package(pkg_dir)
-      stop(sprintf("Package '%s' from registry does not match package name in description file: '%s'", pkg_dir, desc$package))
+      errmsg <- sprintf("Package '%s' from registry does not match package name in description file: '%s'", pkg_dir, desc$package)
+      if(nrow(gert::git_status(staged = TRUE))){
+        # Pkg was already in the universe and needs to be removed now
+        commit_as_bot(errmsg)
+        gert::git_push(verbose = TRUE)
+      }
+      stop(errmsg)
     }
     if('config/runiverse/noindex' %in% names(desc)){
       stop(sprintf("Package '%s' has noindex in description file", desc$package))
@@ -668,7 +674,7 @@ update_workflows <- function(monorepo_name){
   if(any(gert::git_status()$staged)){
     changed_files <- paste(gert::git_status(staged = TRUE)$file, collapse = ', ')
     print_message("Committing changes for: %s", changed_files)
-    gert::git_commit(message = paste("GHA update:", trimws(workflow_commit$message)), "r-universe[bot] <74155986+r-universe[bot]@users.noreply.github.com>")
+    commit_as_bot(workflow_commit$message)
     gert::git_push(verbose = TRUE)
   } else {
     print_message("GHA workflows are up-to-date")
@@ -690,4 +696,8 @@ check_new_release_tags <- function(){
 
 url_to_repo <- function(url){
   sprintf('%s/%s', basename(dirname(url)), basename(url))
+}
+
+commit_as_bot <- function(txt){
+  gert::git_commit(message = paste("GHA update:", trimws(txt)), "r-universe[bot] <74155986+r-universe[bot]@users.noreply.github.com>")
 }
