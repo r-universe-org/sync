@@ -58,6 +58,7 @@ submodules_up_to_date <- function(path = '.'){
       fine <- c(fine, module$path)
     } else {
       print_message("Failed to get upstream status for %s@%s", module$url, module$branch)
+      fine <- c(fine, module$path) # no point in updating missing branch/pkg?
     }
   }
   return(fine)
