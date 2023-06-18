@@ -224,7 +224,7 @@ update_one_package <- function(x, update_pkg_remotes = FALSE, cleanup_after = FA
         # Assume pkg_branch is a raw commit hash
         remote_head <- tolower(pkg_branch)
       } else {
-        print_message("No such branch '%s' for package '%s'. Skipping...", pkg_branch, pkg_dir)
+        stop(sprintf("No such branch '%s' for package '%s'. Skipping...", pkg_branch, pkg_dir))
         gert::git_reset_hard()
         return()
       }
