@@ -596,7 +596,7 @@ update_release_branch <- function(pkg_dir, pkg_url){
 not_a_fork <- function(repo){
   res <- gh::gh(paste0('/repos/', repo))
   print_message("Repo %s %s a fork.", repo, ifelse(res$fork, "is", "is NOT"))
-  return(!isTRUE(res$fork))
+  return(!isTRUE(res$fork) && !isTRUE(res$archived))
 }
 
 is_valid_registry <- function(repo_name){
