@@ -335,7 +335,10 @@ get_recursive_remotes <- function(desc, via = NULL){
     return(NULL)
   remotes_repos <- trimws(strsplit(desc$remotes, ',')[[1]])
   all_lists <- lapply(remotes_repos, function(x){
-    info <- remotes::parse_repo_spec(x)
+    info <- try(remotes::parse_repo_spec(x))
+    if(inherits(info, 'try-error')){
+      return(NULL)
+    }
     info$username <- sub("^github::", "", info$username)
     if(info$repo %in% via)
       return(NULL)
@@ -345,7 +348,11 @@ get_recursive_remotes <- function(desc, via = NULL){
         return(NULL)
       }
     }
-    desc <- get_github_description_cached(info)
+    desc <- try(get_github_description_cached(info))
+    if(inherits(desc, 'try-error')){
+      message("Failed to get remote: ", x)
+      return(NULL)
+    }
     out <- list(
       package = desc$package,
       url = sprintf("https://github.com/%s/%s", info$username, info$repo),
