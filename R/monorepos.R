@@ -421,9 +421,7 @@ read_registry_list <- function(){
   monorepo_url <- gert::git_remote_info()$url
   universe <- sub("_", "@", basename(monorepo_url), fixed = TRUE)
   if(universe == 'cran'){
-    df <- utils::read.csv('.registry/crantogit.csv')
-    registry <- lapply(seq_len(nrow(df)), function(i){as.list(df[i,])})
-    return(registry)
+    return(metacran_dummy_registry())
   }
   jsonfile <- sprintf('.registry/%s.json', universe)
   registry <- if(file.exists(jsonfile)){
@@ -708,4 +706,17 @@ url_to_repo <- function(url){
 
 commit_as_bot <- function(txt){
   gert::git_commit(message = paste("GHA update:", trimws(txt)), "r-universe[bot] <74155986+r-universe[bot]@users.noreply.github.com>")
+}
+
+metacran_dummy_registry <- function(archived_days = 60){
+  tmp <- tempfile()
+  on.exit(unlink(tmp))
+  curl::curl_download('https://cloud.r-project.org/web/packages/packages.rds', destfile = tmp)
+  cran <- as.data.frame(readRDS(tmp), stringsAsFactors = FALSE)
+  archived <- read.csv('https://r-universe-org.github.io/cran-to-git/archived.csv')
+  archived$age <- Sys.Date() - as.Date(archived$Date)
+  archived <- archived[archived$age < archived_days,]
+  pkgs <- sort(unique(c(cran$Package, archived$Package)))
+  stopifnot(length(pkgs) > 19000)
+  lapply(pkgs, function(x){list(package = x, url = paste0("https://github.com/cran/", x ))})
 }
