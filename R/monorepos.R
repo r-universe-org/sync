@@ -56,7 +56,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   }
 
   # Sync with the user registry file (currently libgit2 does not support shallow clones, sadly)
-  res <- sys::exec_wait("git", c("submodule", "update", "--init", "--remote", '.registry'))
+  res <- sys::exec_wait("git", c("submodule", "update", "--init", "--recommend-shallow", "--remote", '.registry'))
 
   # If this fails, check if the personal registry still exists
   if(res != 0){
@@ -65,7 +65,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
       if(is.null(newrepo)){
         switch_to_registry('r-universe-org/cran-to-git', validate = FALSE)
       }
-      sys::exec_wait("git", c("submodule", "update", "--init", "--remote", '.registry'))
+      sys::exec_wait("git", c("submodule", "update", "--init", "--recommend-shallow", "--remote", '.registry'))
     } else {
       stop("Failure cloning .registry repository")
     }
@@ -237,7 +237,7 @@ update_one_package <- function(x, update_pkg_remotes = FALSE, cleanup_after = FA
     }
     print_message("Updating package '%s' from: %s", pkg_dir, pkg_url)
     sys::exec_wait("git", c("update-index", "--cacheinfo", "160000", remote_head, pkg_dir))
-    sys::exec_wait("git", c("submodule", "update", "--init", pkg_dir))
+    sys::exec_wait("git", c("submodule", "update", "--init", "--recommend-shallow", pkg_dir))
   }
   gert::git_add(pkg_dir)
   if(!any(gert::git_status()$staged)){
@@ -445,7 +445,7 @@ normalize_git_url <- function(url){
 
 update_gitmodules <- function(){
   registry <- lapply(read_registry_list(), function(x){c(x, registered = TRUE)})
-  remotes <- read_remotes_list()
+  remotes <- lapply(read_remotes_list(), function(x){c(x, registered = FALSE)})
   registry_url <- gert::git_remote_list(repo = I('.registry'))$url
   pkgs <- c(list(list(
     package = '.registry',
@@ -459,7 +459,7 @@ update_gitmodules <- function(){
       stop("Field 'package' missing from registry entry")
     if(!length(x$url))
       stop("Field 'url' missing from registry entry")
-    str <- sprintf('[submodule "%s"]\n\tpath = %s\n\turl = %s\n\tshallow = true',
+    str <- sprintf('[submodule "%s"]\n\tpath = %s\n\turl = %s',
             x$package, x$package, normalize_git_url(x$url))
     if(length(x$branch)){
       if(identical(x$branch, '*release')) # keep release we have currently
@@ -468,8 +468,8 @@ update_gitmodules <- function(){
     }
     if(length(x$subdir))
       str <- paste0(str, '\n\tsubdir = ', x$subdir[1])
-    if(x$package != '.registry')
-      str <- paste0(str, '\n\tregistered = ', tolower(isTRUE(x$registered)))
+    if(x$package != '.registry' && isFALSE(x$registered))
+      str <- paste0(str, '\n\tregistered = false')
     return(str)
   }, character(1))
   writeLines(lines, '.gitmodules')
@@ -632,7 +632,7 @@ switch_to_registry <- function(repo_name, validate = TRUE){
   message("Switching universe to registry: ", repo_name)
   regrepo <- sprintf('https://github.com/%s', repo_name)
   sys::exec_wait("git", c("submodule", "set-url", ".registry", regrepo))
-  sys::exec_wait("git", c("submodule", "update", "--init", "--remote", '.registry'))
+  sys::exec_wait("git", c("submodule", "update", "--init", "--recommend-shallow", "--remote", '.registry'))
   if(isTRUE(validate)){
     pkgdf <- jsonlite::fromJSON('.registry/packages.json')
     if(!is.data.frame(pkgdf))
