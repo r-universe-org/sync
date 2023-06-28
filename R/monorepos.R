@@ -421,7 +421,7 @@ read_registry_list <- function(){
   monorepo_url <- gert::git_remote_info()$url
   universe <- sub("_", "@", basename(monorepo_url), fixed = TRUE)
   if(universe == 'cran'){
-    return(metacran_dummy_registry())
+    #return(metacran_dummy_registry())
   }
   jsonfile <- sprintf('.registry/%s.json', universe)
   registry <- if(file.exists(jsonfile)){
