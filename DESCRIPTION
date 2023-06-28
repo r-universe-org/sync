@@ -11,13 +11,14 @@ Imports:
     curl,
     sys,
     jsonlite,
-    gert,
+    gert (>= 1.9.3),
     gh,
     ghapps,
     digest,
     remotes,
     withr
 Remotes: 
-    jeroen/ghapps
+    jeroen/ghapps,
+    r-lib/gert
 RoxygenNote: 7.1.2
 License: Apache License 2.0

@@ -10,7 +10,9 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   monorepo_name <- basename(monorepo_url)
   repo <- file.path(tempdir(), paste0(monorepo_name, '-universe'))
   unlink(repo, recursive = TRUE)
-  gert::git_clone(monorepo_url, path = repo)
+  #gert::git_clone(monorepo_url, path = repo)
+  git_cmd("clone", monorepo_url, repo)
+  options('gert.use.repo.cache' = TRUE)
   pwd <- getwd()
   setwd(repo)
 
@@ -421,7 +423,7 @@ read_registry_list <- function(){
   monorepo_url <- gert::git_remote_info()$url
   universe <- sub("_", "@", basename(monorepo_url), fixed = TRUE)
   if(universe == 'cran'){
-    #return(metacran_dummy_registry())
+    return(metacran_dummy_registry())
   }
   jsonfile <- sprintf('.registry/%s.json', universe)
   registry <- if(file.exists(jsonfile)){
