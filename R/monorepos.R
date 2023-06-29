@@ -271,6 +271,7 @@ update_one_package <- function(x, update_pkg_remotes = FALSE, cleanup_after = FA
     sig <- format(person, include = c("given", "family", "email"))
     validate_signature(sig) # validates email syntax from description
     sig <- paste(sig, unclass(pkg_commit$time)) # add timestamp
+    git_cmd("pull", "--rebase")
     gert::git_commit(message = paste(desc$package, desc$version), author = sig)
     gert::git_push(verbose = TRUE)
     if(cleanup_after){
