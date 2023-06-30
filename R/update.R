@@ -106,6 +106,9 @@ parse_raw_gitpack <- function(buf){
   txt <- readLines(con, warn = FALSE)
   stopifnot(grepl('^[0-9a-f]{4}#', txt[1]))
   stopifnot(grepl('service=', txt[1]))
+  if(length(txt) == 2 && txt[2] == '00000000'){
+    return(NULL) #empty repo
+  }
   stopifnot(utils::tail(txt, 1) == '0000')
   refs <- utils::head(txt, -1)
   if(grepl("git-upload-pack0000", txt[1])){
@@ -130,6 +133,10 @@ remote_heads_many <- function(repos, refs = NULL, verbose = TRUE){
     h <- curl::new_handle(useragent = 'git/2.35.1.windows.2', failonerror = TRUE)
     curl::curl_fetch_multi(url, handle = h, done = function(res){
       txt <- parse_raw_gitpack(res$content)
+      if(!length(txt)){
+        message("Failed to get HEAD ref: ", repos[i])
+        return()
+      }
       pattern <- ifelse(ref=='HEAD', 'HEAD$', sprintf("\\/%s$", ref))
       match <- grep(pattern, txt, value = TRUE)
       out[k] <<- ifelse(length(match), sub(" .*$", "", match), NA_character_)
