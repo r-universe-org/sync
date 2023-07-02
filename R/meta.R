@@ -105,6 +105,7 @@ trigger_workflow <- function(universe, workflow = 'sync.yml', inputs = NULL){
   gh::gh(url, .method = 'POST', ref = 'master', inputs = inputs)
 }
 
+# TODO: this may not work as intended because metacran lags behind CRAN
 cran_recently_updated <- function(hours = 1){
   tmp <- tempfile()
   on.exit(unlink(tmp))
