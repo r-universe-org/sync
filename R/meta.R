@@ -44,10 +44,6 @@ needs_update <- function(universe){
   fullpath <- normalizePath(universe)
   on.exit(unlink(fullpath, recursive = TRUE))
   withr::local_dir(universe)
-  # HACK: workaround for git_submodule_list bug: https://github.com/r-universe-org/help/issues/256
-  system("sed -i.bak '/registered =/d' .gitmodules")
-  system("sed -i.bak '/shallow =/d' .gitmodules")
-  # End hack
   pkgs <- unique(c('.registry', list.files(), gert::git_submodule_list()$path))
   check_new_release_tags()
   skiplist <- submodules_up_to_date()
