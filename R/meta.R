@@ -36,7 +36,7 @@ check_and_trigger <- function(universe){
 }
 
 needs_update <- function(universe){
-  if(universe == 'cran') return("everything")
+  if(universe == 'cran') return(cran_recently_updated())
   retry(git_clone(paste0('https://github.com/r-universe/', universe)))
   fullpath <- normalizePath(universe)
   on.exit(unlink(fullpath, recursive = TRUE))
@@ -103,4 +103,13 @@ list_universes <- function(){
 trigger_workflow <- function(universe, workflow = 'sync.yml', inputs = NULL){
   url <- sprintf('/repos/r-universe/%s/actions/workflows/%s/dispatches', universe, workflow)
   gh::gh(url, .method = 'POST', ref = 'master', inputs = inputs)
+}
+
+cran_recently_updated <- function(hours = 1){
+  tmp <- tempfile()
+  on.exit(unlink(tmp))
+  curl::curl_download('https://cloud.r-project.org/web/packages/packages.rds', destfile = tmp)
+  cran <- as.data.frame(readRDS(tmp), stringsAsFactors = FALSE)
+  cran$age <- difftime(Sys.time(),  as.POSIXct(cran[['Date/Publication']]), units = 'hours')
+  cran$Package[cran$age < hours]
 }
