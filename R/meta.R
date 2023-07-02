@@ -36,7 +36,10 @@ check_and_trigger <- function(universe){
 }
 
 needs_update <- function(universe){
-  if(universe == 'cran') return(cran_recently_updated())
+  if(universe == 'cran') {
+    if(format(Sys.time(), '%H') == '00') return("Everything")
+    return(cran_recently_updated())
+  }
   retry(git_clone(paste0('https://github.com/r-universe/', universe)))
   fullpath <- normalizePath(universe)
   on.exit(unlink(fullpath, recursive = TRUE))
