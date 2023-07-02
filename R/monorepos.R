@@ -508,7 +508,7 @@ read_description_file <- function(path){
     desc$maintainer <- desc[['x-cran-original-maintainer']]
   }
   # Hack for CRAN failing to set x-cran-original-maintainer
-  if(basename(basename(path)) == 'fastclime'){
+  if(basename(dirname(path)) == 'fastclime'){
     desc$maintainer <- 'Haotian Pang <hpang@princeton.edu>'
   }
   return(desc)
