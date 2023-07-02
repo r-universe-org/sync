@@ -266,9 +266,7 @@ update_one_package <- function(x, update_pkg_remotes = FALSE, cleanup_after = FA
     subrepo <- gert::git_open(pkg_dir)
     stopifnot(basename(gert::git_info(repo = subrepo)$path) == pkg_dir)
     pkg_commit <- gert::git_log(repo = subrepo, max = 1)
-    person <- utils::as.person(desc$maintainer)[1]
-    person$email <- normalize_email(person$email)
-    sig <- format(person, include = c("given", "family", "email"))
+    sig <- normalize_maintainer(desc$maintainer)
     validate_signature(sig) # validates email syntax from description
     sig <- paste(sig, unclass(pkg_commit$time)) # add timestamp
     git_cmd("pull", "--rebase")
@@ -288,6 +286,16 @@ validate_signature <- function(str){
 
 normalize_email <- function(x){
   sub("[+].+@gmail.com", '@gmail.com', x)
+}
+
+normalize_maintainer <- function(x){
+  person <- utils::as.person(x)[1]
+  if(!length(person$email)){
+    message(sprintf("ERROR parsing Maintainer field for %s", x))
+    return(x)
+  }
+  person$email <- normalize_email(person$email)
+  format(person, include = c("given", "family", "email"))
 }
 
 update_remotes_json <- function(desc){
@@ -487,14 +495,21 @@ get_description_data <- function(pkg_dir){
 read_description_file <- function(path){
   desc <- as.list(tools:::.read_description(path))
   names(desc) <- tolower(names(desc))
-  if(!length(desc$maintainer)){
+  if(!length(desc$maintainer) || identical(tolower(desc$maintainer), 'orphaned')){
     authors <- desc[['authors@r']]
     if(length(authors)){
       maintainer <- tryCatch(find_maintainer_safe(authors), error = function(e){
         stop(sprintf("Failed to parse Authors@R for package '%s': %s", desc$package, e$message))
       })
-      desc <- c(desc, maintainer)
+      desc$maintainer <- as.character(maintainer)
     }
+  }
+  if(identical(tolower(desc$maintainer), 'orphaned')){
+    desc$maintainer <- desc[['x-cran-original-maintainer']]
+  }
+  # Hack for CRAN failing to set x-cran-original-maintainer
+  if(basename(basename(path)) == 'fastclime'){
+    desc$maintainer <- 'Haotian Pang <hpang@princeton.edu>'
   }
   return(desc)
 }
