@@ -48,6 +48,15 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   # Check for changes in GHA scripts
   update_workflows(monorepo_name)
 
+  # Check for potentially missing source packages
+  missings <- setdiff(list.files(), universe_ls(monorepo_name))
+  if(length(missings)){
+    message("Missing source packages: ", paste(missings, collapse = ', '))
+    lapply(missings, function(pkg){
+      try(trigger_rebuild(monorepo_name, pkg))
+    })
+  }
+
   # Consider switching to a personal registry if available
   current_registry <- url_to_repo(gert::git_submodule_info(".registry")$url)
   message("Registry is set to: ", current_registry)
@@ -737,4 +746,14 @@ metacran_dummy_registry <- function(archived_days = 60){
   pkgs <- sort(unique(c(cran$Package, archived$Package)))
   stopifnot(length(pkgs) > 19000)
   lapply(pkgs, function(x){list(package = x, url = paste0("https://github.com/cran/", x ))})
+}
+
+universe_ls <- function(universe){
+  jsonlite::fromJSON(sprintf('https://%s.r-universe.dev/api/ls', universe))
+}
+
+trigger_rebuild <- function(repository, pkg){
+  cat(sprintf("Rebuilding %s/%s\n", repository, pkg))
+  url <- sprintf('/repos/r-universe/%s/actions/workflows/build.yml/dispatches', repository)
+  gh::gh(url, .method = 'POST', ref = 'master', inputs = list(package = pkg))
 }
