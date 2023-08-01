@@ -472,6 +472,8 @@ update_gitmodules <- function(){
   )), registry, remotes)
   pkgs_names <- vapply(pkgs, function(x){x$package}, character(1))
   pkgs <- pkgs[!duplicated(pkgs_names)]
+  new_names <- vapply(pkgs, function(x){x$package}, character(1))
+  pkgs <- pkgs[order(new_names, method = 'radix')]
   lines <- vapply(pkgs, function(x){
     if(!length(x$package))
       stop("Field 'package' missing from registry entry")
