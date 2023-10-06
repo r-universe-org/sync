@@ -52,10 +52,14 @@ submodules_up_to_date <- function(path = '.'){
   broken <- submodules[is.na(submodules$upstream),]
   for(i in seq_len(nrow(broken))){
     module <- as.list(broken[i,])
-    ishash <- grepl('^[0-9a-f]{6,100}$', tolower(module$branch)) & grepl(tolower(module$branch), tolower(module$head), fixed = TRUE)
+    ishash <- grepl('^[0-9a-f]{6,100}$', tolower(module$branch))
     if(ishash){
-      print_message("Assuming raw hash: for %s@%s", module$url, module$branch)
-      fine <- c(fine, module$path)
+      if(grepl(tolower(module$branch), tolower(module$head), fixed = TRUE)){
+        print_message("Found up-to-date raw hash: for %s@%s", module$url, module$branch)
+        fine <- c(fine, module$path)
+      } else {
+        print_message("Assuming raw hash: for %s@%s", module$url, module$branch)
+      }
     } else {
       print_message("Failed to get upstream status for %s@%s", module$url, module$branch)
       fine <- c(fine, module$path) # no point in updating missing branch/pkg?
