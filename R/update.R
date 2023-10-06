@@ -58,6 +58,7 @@ submodules_up_to_date <- function(path = '.'){
         print_message("Found up-to-date raw hash: for %s@%s", module$url, module$branch)
         fine <- c(fine, module$path)
       } else {
+        # TODO: should we normalize/validate the commit hash here?
         print_message("Assuming raw hash: for %s@%s", module$url, module$branch)
       }
     } else {
