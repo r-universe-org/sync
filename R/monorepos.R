@@ -737,14 +737,15 @@ commit_as_bot <- function(txt){
   gert::git_commit(message = paste("GHA update:", trimws(txt)), "r-universe[bot] <74155986+r-universe[bot]@users.noreply.github.com>")
 }
 
-metacran_dummy_registry <- function(archived_days = 60){
+# Use same rules as 'cranscraper'
+metacran_dummy_registry <- function(archived_days = 60, skip = 'request'){
   tmp <- tempfile()
   on.exit(unlink(tmp))
   curl::curl_download('https://cloud.r-project.org/web/packages/packages.rds', destfile = tmp)
   cran <- as.data.frame(readRDS(tmp), stringsAsFactors = FALSE)
   archived <- read.csv('https://r-universe-org.github.io/cran-to-git/archived.csv')
   archived$age <- Sys.Date() - as.Date(archived$Date)
-  archived <- archived[archived$age < archived_days,]
+  archived <- archived[archived$age < archived_days & !grepl(skip, archived$Reason, ignore.case = TRUE),]
   pkgs <- sort(unique(c(cran$Package, archived$Package)))
   stopifnot(length(pkgs) > 19000)
   lapply(pkgs, function(x){list(package = x, url = paste0("https://github.com/cran/", x ))})
