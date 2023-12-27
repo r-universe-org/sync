@@ -44,6 +44,11 @@ needs_update <- function(universe){
   fullpath <- normalizePath(universe)
   on.exit(unlink(fullpath, recursive = TRUE))
   withr::local_dir(universe)
+  hours_passed <- as.integer(difftime(Sys.time(), gert::git_log(max=1)$time, units = 'hours'))
+  if(hours_passed > 0 && hours_passed %% (30*24) == 0){
+    print_message("Triggering random montly refresh for: %s", universe)
+    return('.registry')
+  }
   pkgs <- unique(c('.registry', list.files(), gert::git_submodule_list()$path))
   check_new_release_tags()
   skiplist <- submodules_up_to_date()
