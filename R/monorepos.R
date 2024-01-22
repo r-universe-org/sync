@@ -743,6 +743,10 @@ metacran_dummy_registry <- function(archived_days = 60, skip = 'request'){
   on.exit(unlink(tmp))
   curl::curl_download('https://cloud.r-project.org/web/packages/packages.rds', destfile = tmp)
   cran <- as.data.frame(readRDS(tmp), stringsAsFactors = FALSE)
+  winonly <- which(cran$OS_type == 'windows')
+  if(length(winonly)){
+    cran <- cran[-winonly,]
+  }
   archived <- read.csv('https://r-universe-org.github.io/cran-to-git/archived.csv')
   archived$age <- Sys.Date() - as.Date(archived$Date)
   archived <- archived[archived$age < archived_days & !grepl(skip, archived$Reason, ignore.case = TRUE),]
