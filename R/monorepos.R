@@ -676,8 +676,7 @@ update_registry_repo <- function(monorepo_name, current_registry){
     return('ropensci/roregistry')
   }
   personal_registry_repos <- c(
-    sprintf('%s/%s.r-universe.dev', monorepo_name, monorepo_name),
-    sprintf('%s/universe', monorepo_name))
+    sprintf('%s/%s.r-universe.dev', monorepo_name, monorepo_name))
   for(x in personal_registry_repos){
     if(is_valid_registry(x)){
       if(current_registry != x){
