@@ -68,7 +68,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   res <- sys::exec_wait("git", c("submodule", "update", "--init", "--recommend-shallow", "--remote", '.registry'))
 
   # If this fails, check if the personal registry still exists
-  if(res != 0){
+  if(res != 0 || !file.exists('.registry/packages.json')){
     if(basename(current_registry) != 'cran-to-git' && is_deleted_registry(current_registry)){
       newrepo <- update_registry_repo(monorepo_name, current_registry)
       if(is.null(newrepo)){
@@ -627,11 +627,27 @@ update_release_branch <- function(pkg_dir, pkg_url){
   return(pkg_branch)
 }
 
+is_archived <- function(repo){
+  res <- gh::gh(paste0('/repos/', repo))
+  print_message("Repo %s %s archived.", repo, ifelse(res$archived, "is", "is NOT"))
+  return(isTRUE(res$archived))
+}
+
 not_a_fork <- function(repo){
   res <- gh::gh(paste0('/repos/', repo))
   print_message("Repo %s %s a fork.", repo, ifelse(res$fork, "is", "is NOT"))
   print_message("Repo %s %s archived.", repo, ifelse(res$archived, "is", "is NOT"))
   return(!isTRUE(res$fork) && !isTRUE(res$archived))
+}
+
+validate_registry_repo <- function(repo){
+  res <- gh::gh(paste0('/repos/', repo))
+  if(tolower(res$full_name) != tolower(repo)){
+    print_message("Registry %s does not match repo name %s (redirect??)", repo, tolower(res$name))
+    return(FALSE)
+  }
+  print_message("Repo %s %s archived.", repo, ifelse(res$archived, "is", "is NOT"))
+  return(!isTRUE(res$archived))
 }
 
 is_valid_registry <- function(repo_name){
@@ -641,23 +657,21 @@ is_valid_registry <- function(repo_name){
   pkgsurl <- sprintf('https://raw.githubusercontent.com/%s/HEAD/packages.json', repo_name)
   success <- curl::curl_fetch_memory(pkgsurl)$status_code == 200
   print_message("Checking if a registry exists at %s: %s", repo_name, ifelse(success, 'yes', "no"))
-  if(success && basename(repo_name) == 'universe'){
-    return(not_a_fork(repo_name))
-  } else {
-    return(success)
-  }
+  return(success && validate_registry_repo(repo_name))
 }
 
 # specifically test for 404, not some temporary network error
 is_deleted_registry <- function(repo_name){
   pkgsurl <- sprintf('https://raw.githubusercontent.com/%s/HEAD/packages.json', repo_name)
   req <- curl::curl_fetch_memory(pkgsurl)
-  return(req$status_code == 404)
+  return(req$status_code == 404 || is_archived(repo_name))
 }
 
 switch_to_registry <- function(repo_name, validate = TRUE){
   message("Switching universe to registry: ", repo_name)
   regrepo <- sprintf('https://github.com/%s', repo_name)
+  sys::exec_wait("git", c("submodule", "deinit", "--force", ".registry"), std_err = FALSE)
+  unlink(".git/modules/.registry", recursive = TRUE)
   sys::exec_wait("git", c("submodule", "set-url", ".registry", regrepo))
   sys::exec_wait("git", c("submodule", "update", "--init", "--recommend-shallow", "--remote", '.registry'))
   if(isTRUE(validate)){
