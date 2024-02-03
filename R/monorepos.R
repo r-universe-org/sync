@@ -64,6 +64,13 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
     update_registry_repo(monorepo_name, current_registry)
   }
 
+  if(basename(gert::git_submodule_info(".registry")$url) == 'universe'){
+    bar <-  strrep("=", 50)
+    stop(sprintf("\n\n%s ACTION REQUIRED %s\nTo continue using r-universe, please rename your registry repo at %s to '%s.r-universe.dev'.
+See also this blog post: https://ropensci.org/blog/2023/02/07/runiverse-registry-repo/\n%s%s\n\n\n",
+         bar, bar, gert::git_submodule_info(".registry")$url, monorepo_name, bar, bar))
+  }
+
   # Sync with the user registry file (currently libgit2 does not support shallow clones, sadly)
   res <- sys::exec_wait("git", c("submodule", "update", "--init", "--recommend-shallow", "--remote", '.registry'))
 
@@ -681,6 +688,7 @@ switch_to_registry <- function(repo_name, validate = TRUE){
     if(!all(c('package', 'url') %in% names(pkgdf)))
       stop("The package.json file does not have expected 'package and' 'url' fields")
   }
+  options('gert.use.repo.cache' = FALSE) #flush cache
   gert::git_add('.registry')
 }
 
