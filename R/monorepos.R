@@ -65,10 +65,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   }
 
   if(basename(gert::git_submodule_info(".registry")$url) == 'universe'){
-    bar <-  strrep("=", 50)
-    stop(sprintf("\n\n%s ACTION REQUIRED %s\nTo continue using r-universe, please rename your registry repo at %s to '%s.r-universe.dev'.
-See also this blog post: https://ropensci.org/blog/2023/02/07/runiverse-registry-repo/\n%s%s\n\n\n",
-         bar, bar, gert::git_submodule_info(".registry")$url, monorepo_name, bar, bar))
+    switch_to_registry('r-universe-org/cran-to-git', validate = FALSE)
   }
 
   # Sync with the user registry file (currently libgit2 does not support shallow clones, sadly)
