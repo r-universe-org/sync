@@ -64,15 +64,8 @@ needs_update <- function(universe){
   }
   current_registry <- url_to_repo(gert::git_submodule_info(".registry")$url)
   is_cran_registry <- basename(current_registry) == "cran-to-git"
-  is_old_registry <- basename(current_registry) == "universe"
-  if(is_cran_registry || is_old_registry){
-    if(is_valid_registry(sprintf('%s/%s.r-universe.dev', universe, universe))){
-      print_message("Might need to switch to custom packages.json")
-      return('.registry')
-    }
-  }
   if(is_cran_registry){
-    if(is_valid_registry(paste0(universe, '/universe'))){
+    if(is_valid_registry(sprintf('%s/%s.r-universe.dev', universe, universe))){
       print_message("Might need to switch to custom packages.json")
       return('.registry')
     }

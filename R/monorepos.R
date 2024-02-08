@@ -64,10 +64,6 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
     update_registry_repo(monorepo_name, current_registry)
   }
 
-  if(basename(gert::git_submodule_info(".registry")$url) == 'universe'){
-    switch_to_registry('r-universe-org/cran-to-git', validate = FALSE)
-  }
-
   # Sync with the user registry file (currently libgit2 does not support shallow clones, sadly)
   res <- sys::exec_wait("git", c("submodule", "update", "--init", "--recommend-shallow", "--remote", '.registry'))
 
