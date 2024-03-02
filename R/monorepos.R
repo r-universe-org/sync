@@ -174,7 +174,7 @@ set_registry_commit_status <- function(monorepo_url, success){
       }, error = function(e){registry_submodule$head})
       endpoint <- sprintf('/repos/%s/statuses/%s', repo, sha)
       context <- sprintf('r-universe/%s/sync', dirname(repo))
-      description <- 'Update R-universe monorepo from registryr'
+      description <- 'Update R-universe monorepo from registry'
       state <- ifelse(isTRUE(success), 'success', 'failure')
       url <- sprintf('%s/actions/runs/%s', monorepo_url, run_id)
       gh::gh(endpoint, .method = 'POST', .token = token, state = state,
