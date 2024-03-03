@@ -42,7 +42,7 @@ update_submodules <- function(path = '.', skip = '.registry'){
 
 #' @export
 #' @rdname sync
-submodules_up_to_date <- function(path = '.'){
+submodules_up_to_date <- function(skip_broken = TRUE, path = '.'){
   withr::local_dir(path)
   repo <- gert::git_open(path)
   submodules <- gert::git_submodule_list(repo = repo)
@@ -63,7 +63,9 @@ submodules_up_to_date <- function(path = '.'){
       }
     } else {
       print_message("Failed to get upstream status for %s@%s", module$url, module$branch)
-      fine <- c(fine, module$path) # no point in updating missing branch/pkg?
+      if(skip_broken){
+        fine <- c(fine, module$path) # no point in updating missing branch/pkg?
+      }
     }
   }
   return(fine)
