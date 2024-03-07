@@ -607,6 +607,9 @@ lookup_gitlab_release <- function(pkg_url){
     p <- remotes::parse_github_url(sub("gitlab.com", "github.com", pkg_url, fixed = TRUE))
     endpoint <- sprintf("https://gitlab.com/api/v4/projects/%s%%2F%s/releases", p$username, p$repo)
     releases <- jsonlite::fromJSON(endpoint, simplifyVector = FALSE)
+    releases <- Filter(function(x){
+      !isTRUE(x$upcoming_release)
+    }, releases)
     if(!length(releases))
       stop("No releases found for ", pkg_url)
     releases[[1]]$tag_name
