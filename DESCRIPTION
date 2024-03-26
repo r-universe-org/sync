@@ -16,7 +16,8 @@ Imports:
     ghapps,
     digest,
     remotes,
-    withr
+    withr,
+    yaml
 Remotes: 
     jeroen/ghapps,
     r-lib/gert

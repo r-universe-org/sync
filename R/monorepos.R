@@ -443,6 +443,9 @@ read_registry_list <- function(){
   if(universe == 'cran'){
     return(metacran_dummy_registry())
   }
+  if(universe == 'bioc'){
+    return(metabioc_dummy_registry())
+  }
   jsonfile <- sprintf('.registry/%s.json', universe)
   registry <- if(file.exists(jsonfile)){
     jsonlite::read_json(jsonfile)
@@ -788,6 +791,15 @@ metacran_dummy_registry <- function(archived_days = 60, skip = 'request'){
   pkgs <- sort(unique(c(cran$Package, archived$Package)))
   stopifnot(length(pkgs) > 19000)
   lapply(pkgs, function(x){list(package = x, url = paste0("https://github.com/cran/", x ))})
+}
+
+# Same list as 'cranscraper'
+metabioc_dummy_registry <- function(){
+  yml <- yaml::read_yaml("https://bioconductor.org/config.yaml")
+  bioc_version <- yml$devel_version
+  bioc <- jsonlite::read_json(sprintf('https://bioconductor.org/packages/json/%s/bioc/packages.json', bioc_version))
+  stopifnot(length(bioc) > 2100)
+  lapply(names(bioc), function(x){list(package = x, url = paste0("https://github.com/bioc/", x ))})
 }
 
 universe_ls <- function(universe){

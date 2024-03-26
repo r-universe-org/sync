@@ -40,6 +40,9 @@ needs_update <- function(universe){
     if(format(Sys.time(), '%H') == '00') return("Everything")
     return(cran_recently_updated())
   }
+  if(universe == 'bioc') {
+    return(metabioc_recently_updated())
+  }
   retry(git_clone(paste0('https://github.com/r-universe/', universe)))
   fullpath <- normalizePath(universe)
   on.exit(unlink(fullpath, recursive = TRUE))
@@ -110,4 +113,12 @@ cran_recently_updated <- function(hours = 1){
   cran <- as.data.frame(readRDS(tmp), stringsAsFactors = FALSE)
   cran$age <- difftime(Sys.time(),  as.POSIXct(cran[['Date/Publication']]), units = 'hours')
   cran$Package[cran$age < hours]
+}
+
+metabioc_recently_updated <- function(hours = 1){
+  latest <- gh::gh("/orgs/bioc/repos", sort='pushed', per_page = 1)[[1]]
+  pushed <- as.POSIXct(sub("T", " ", latest$pushed_at), tz = 'UTC')
+  if(difftime(Sys.time(),  pushed, units = 'hours') < hours){
+    return('Everything')
+  }
 }
