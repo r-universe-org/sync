@@ -797,11 +797,12 @@ metacran_dummy_registry <- function(archived_days = 60, skip = 'request'){
 # Same list as 'cranscraper'
 metabioc_dummy_registry <- function(){
   nomirror <- c('SwathXtend', 'h5vc') # large git files
+  skiplist <- c('IntOMICS') # package was renamed bc trademarks
   yml <- yaml::read_yaml("https://bioconductor.org/config.yaml")
   bioc_version <- yml$devel_version
   bioc <- jsonlite::read_json(sprintf('https://bioconductor.org/packages/json/%s/bioc/packages.json', bioc_version))
   stopifnot(length(bioc) > 2100)
-  lapply(names(bioc), function(x){
+  lapply(setdiff(names(bioc), skiplist), function(x){
     baseurl <- ifelse(x %in% nomirror, "https://git.bioconductor.org/packages/", "https://github.com/bioc/")
     list(package = x, url = paste0(baseurl, x ))
   })
