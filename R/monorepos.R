@@ -298,6 +298,7 @@ normalize_email <- function(x){
 }
 
 normalize_maintainer <- function(x){
+  x <- sub(">.*", ">", x) # in Bioc multiple maintainers are allowed. Get the first one.
   person <- utils::as.person(x)[1]
   if(!length(person$email)){
     message(sprintf("ERROR parsing Maintainer field for %s", x))
