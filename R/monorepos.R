@@ -510,7 +510,7 @@ get_description_data <- function(pkg_dir){
 read_description_file <- function(path){
   desc <- as.list(tools:::.read_description(path))
   names(desc) <- tolower(names(desc))
-  if(!length(desc$maintainer) || identical(tolower(desc$maintainer), 'orphaned')){
+  if(!length(desc[['maintainer']]) || identical(tolower(desc$maintainer), 'orphaned')){
     authors <- desc[['authors@r']]
     if(length(authors)){
       maintainer <- tryCatch(find_maintainer_safe(authors), error = function(e){
