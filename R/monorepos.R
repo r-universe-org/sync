@@ -802,6 +802,7 @@ metabioc_dummy_registry <- function(){
   bioc_version <- yml$devel_version
   bioc <- jsonlite::read_json(sprintf('https://bioconductor.org/packages/json/%s/bioc/packages.json', bioc_version))
   stopifnot(length(bioc) > 2100)
+  bioc <- Filter(function(x) !identical(x$PackageStatus, 'Deprecated'), bioc)
   lapply(setdiff(names(bioc), skiplist), function(x){
     baseurl <- ifelse(x %in% nomirror, "https://git.bioconductor.org/packages/", "https://github.com/bioc/")
     list(package = x, url = paste0(baseurl, x ))
