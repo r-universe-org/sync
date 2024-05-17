@@ -718,7 +718,7 @@ update_registry_repo <- function(monorepo_name, current_registry){
   if(monorepo_name == 'r-multiverse'){
     return('r-multiverse/multiverse')
   }
-  if(monorepo_name == 'r-multiverse-production'){
+  if(monorepo_name == 'r-production'){
     return('r-multiverse/production')
   }
   personal_registry_repos <- c(
