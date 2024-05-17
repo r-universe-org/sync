@@ -87,7 +87,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
 
   # Very basic fair use check for now
   registry_name <- basename(gert::git_submodule_info(".registry")$url)
-  if(!(registry_name %in% c("roregistry", "cran-to-git", "cranhaven.r-universe.dev", "r-multiverse.r-universe.dev"))){
+  if(!(registry_name %in% c("roregistry", "cran-to-git", "multiverse", "production", "cranhaven.r-universe.dev"))){
     if(length(read_registry_list()) > 150){
       stop("Personal universes are currently limited to 150 packages")
     }
@@ -714,6 +714,12 @@ switch_to_registry <- function(repo_name, validate = TRUE){
 update_registry_repo <- function(monorepo_name, current_registry){
   if(monorepo_name == 'ropensci'){
     return('ropensci/roregistry')
+  }
+  if(monorepo_name == 'r-multiverse'){
+    return('r-multiverse/multiverse')
+  }
+  if(monorepo_name == 'r-multiverse-production'){
+    return('r-multiverse/production')
   }
   personal_registry_repos <- c(
     sprintf('%s/%s.r-universe.dev', monorepo_name, monorepo_name))
