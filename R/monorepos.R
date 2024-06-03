@@ -796,7 +796,7 @@ metacran_dummy_registry <- function(archived_days = 60, skip = 'request'){
   archived$age <- Sys.Date() - as.Date(archived$Date)
   archived <- archived[archived$age < archived_days & !grepl(skip, archived$Reason, ignore.case = TRUE),]
   pkgs <- sort(unique(c(cran$Package, archived$Package)))
-  stopifnot(length(pkgs) > 19000)
+  stopifnot(length(pkgs) > 20000)
   lapply(pkgs, function(x){list(package = x, url = paste0("https://github.com/cran/", x ))})
 }
 
