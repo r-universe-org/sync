@@ -139,7 +139,7 @@ remote_heads_many <- function(repos, refs = NULL, verbose = TRUE){
     ref <- ifelse(length(refs) && !is.na(refs[i]), refs[i], "HEAD")
     h <- curl::new_handle(useragent = 'git/2.35.1.windows.2', failonerror = TRUE)
     curl::curl_fetch_multi(url, handle = h, done = function(res){
-      txt <- parse_raw_gitpack(res$content)
+      txt <- tryCatch(parse_raw_gitpack(res$content), error = function(...){})
       if(!length(txt)){
         message("Failed to get HEAD ref: ", repos[i])
         return()
