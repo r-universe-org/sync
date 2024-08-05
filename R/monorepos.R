@@ -106,10 +106,15 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
 
   # First update all packages from the registry
   registry <- read_registry_list()
+  registry_pkgs <- vapply(registry, function(x){x$package}, character(1))
+  registry_dups <- duplicated(registry_pkgs)
+  if(any(registry_dups)){
+    print_message("Registry has DUPLICATED packages: '%s'", registry_pkgs[registry_dups])
+  }
   check_new_release_tags()
   skiplist <- submodules_up_to_date(skip_broken = FALSE)
   print_message("Submodules up-to-date:\n %s", paste(skiplist, collapse = '\n '))
-  dirty <- Filter(function(x){is.na(match(x$package, skiplist))}, registry)
+  dirty <- Filter(function(x){is.na(match(x$package, skiplist))}, registry[!registry_dups])
   results1 <- lapply(dirty, try_update_package, update_pkg_remotes = TRUE)
 
   # Should not be needed but sometimes remotes linger around
@@ -118,7 +123,6 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   # Now update all remotes (possibly new ones from package updates)
   # Filter out packages that already exist in the main package registry
   remotes <- read_remotes_list()
-  registry_pkgs <- vapply(registry, function(x){x$package}, character(1))
   remotes <- Filter(function(x){is.na(match(x$package, registry_pkgs))}, remotes)
 
   # Filter duplicates
@@ -435,7 +439,7 @@ cleanup_remotes_list <- function(){
 }
 
 print_message <- function(...){
-  message(sprintf(...))
+  message(paste(sprintf(...), collapse = '\n'))
 }
 
 read_registry_list <- function(){
