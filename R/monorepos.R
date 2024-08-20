@@ -11,7 +11,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   repo <- file.path(tempdir(), paste0(monorepo_name, '-universe'))
   unlink(repo, recursive = TRUE)
   #gert::git_clone(monorepo_url, path = repo)
-  git_cmd("clone", monorepo_url, repo)
+  git_cmd("clone", monorepo_url, repo, timeout = 300)
   options('gert.use.repo.cache' = TRUE)
   pwd <- getwd()
   setwd(repo)

@@ -87,9 +87,9 @@ remove_submodule <- function(pkg){
   unlink(pkg, recursive = TRUE)
 }
 
-git_cmd <- function(..., std_err = TRUE){
+git_cmd <- function(..., std_err = TRUE, timeout = 60){
   # Timeout is mostly in case of unexpected password prompts
-  sys::exec_wait('git', args = c(...), std_err = std_err, timeout = 60)
+  sys::exec_wait('git', args = c(...), std_err = std_err, timeout = timeout)
 }
 
 git_clone <- function(url, dest = NULL){
