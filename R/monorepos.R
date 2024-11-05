@@ -210,6 +210,9 @@ delete_one_package <- function(pkg_dir){
 # Sync the registry packages with the monorepo
 update_one_package <- function(x, update_pkg_remotes = FALSE, cleanup_after = FALSE){
   pkg_dir <- x$package
+  if(grepl("/", pkg_dir)){
+    stop("Package name should not contain slashes: ", pkg_dir)
+  }
   pkg_url <- x$url
   pkg_branch <- ifelse(length(x$branch), x$branch, 'HEAD')
   if(isFALSE(x$available)){
@@ -485,6 +488,8 @@ update_gitmodules <- function(){
   lines <- vapply(pkgs, function(x){
     if(!length(x$package))
       stop("Field 'package' missing from registry entry")
+    if(grepl("/", x$package))
+      stop("Package name should not contain slashes: ", x$package)
     if(!length(x$url))
       stop("Field 'url' missing from registry entry")
     str <- sprintf('[submodule "%s"]\n\tpath = %s\n\turl = %s',
