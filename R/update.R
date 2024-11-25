@@ -129,7 +129,7 @@ parse_raw_gitpack <- function(buf){
 }
 
 remote_heads_many <- function(repos, refs = NULL, verbose = TRUE){
-  pool <- curl::multi_set(multiplex = FALSE) # use default pool
+  pool <- curl::multi_set(multiplex = TRUE) # use default pool
   len <- length(repos)
   out <- rep(NA_character_, len)
   completed <- 0
