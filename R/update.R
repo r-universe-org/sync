@@ -102,7 +102,7 @@ update_and_push <- function(info){
 # Spec: https://www.git-scm.com/docs/http-protocol#_discovering_references
 raw_remote_references <- function(repo){
   url <- sprintf('%s/info/refs?service=git-upload-pack', repo)
-  h <- curl::new_handle(useragent = 'git/2.35.1.windows.2', failonerror = TRUE)
+  h <- make_handle(url)
   req <- curl::curl_fetch_memory(url, handle = h)
   parse_raw_gitpack(req$content)
 }
@@ -137,8 +137,8 @@ remote_heads_many <- function(repos, refs = NULL, verbose = TRUE){
     k <- i
     url <- sprintf('%s/info/refs?service=git-upload-pack', repos[i])
     ref <- ifelse(length(refs) && !is.na(refs[i]), refs[i], "HEAD")
-    h <- curl::new_handle(useragent = 'git/2.35.1.windows.2', failonerror = TRUE)
-    curl::curl_fetch_multi(url, handle = h, done = function(res){
+    h <- make_handle(url)
+    curl::multi_add(handle = h, done = function(res){
       txt <- tryCatch(parse_raw_gitpack(res$content), error = function(...){})
       if(!length(txt)){
         message("Failed to get HEAD ref: ", repos[i])
@@ -186,3 +186,15 @@ remote_heads_in_batches <- function(repos, refs){
   }
   return(output)
 }
+
+make_handle <- function(desc_url, failonerror = TRUE){
+  handle <- curl::new_handle(url = desc_url, failonerror = failonerror, useragent = 'git/2.35.1.windows.2')
+  if(grepl('github.com', desc_url, fixed = TRUE)){
+    token <- Sys.getenv('GITHUB_TOKEN')
+    if(nchar(token)){
+      curl::handle_setheaders(handle, Authorization = paste('Bearer', token))
+    }
+  }
+  handle
+}
+
