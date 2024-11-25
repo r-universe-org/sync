@@ -22,7 +22,7 @@ update_submodules <- function(path = '.', skip = '.registry'){
   withr::local_dir(path)
   repo <- gert::git_open(path)
   submodules <- gert::git_submodule_list(repo = repo)
-  submodules$upstream <- remote_heads_many(submodules$url, submodules$branch)
+  submodules$upstream <- remote_heads_in_batches(submodules$url, submodules$branch)
   for(i in seq_len(nrow(submodules))){
     info <- as.list(submodules[i,])
     if(info$path %in% skip) next
@@ -46,7 +46,7 @@ submodules_up_to_date <- function(skip_broken = TRUE, path = '.'){
   withr::local_dir(path)
   repo <- gert::git_open(path)
   submodules <- gert::git_submodule_list(repo = repo)
-  submodules$upstream <- remote_heads_many(submodules$url, submodules$branch)
+  submodules$upstream <- remote_heads_in_batches(submodules$url, submodules$branch)
   isok <- which(submodules$upstream == submodules$head)
   fine <- submodules$path[isok]
   broken <- submodules[is.na(submodules$upstream),]
@@ -129,7 +129,7 @@ parse_raw_gitpack <- function(buf){
 }
 
 remote_heads_many <- function(repos, refs = NULL, verbose = TRUE){
-  pool <- curl::multi_set(multiplex = TRUE) # use default pool
+  pool <- curl::multi_set(multiplex = TRUE, host_con = 1L) # Use default pool for
   len <- length(repos)
   out <- rep(NA_character_, len)
   completed <- 0
@@ -161,9 +161,28 @@ remote_heads_many <- function(repos, refs = NULL, verbose = TRUE){
         if((len-completed) %% 100 == 0)
           cat(sprintf("\rScanning for changes... %d/%d", as.integer(completed), as.integer(len)), file = stderr())
       }
-    }, fail = message, pool = pool)
+    }, fail = function(err){
+      message(sprintf("Failure for %s: %s", url, err))
+    }, pool = pool)
   })
   curl::multi_run(pool = pool)
   cat("\n", file = stderr())
   out
+}
+
+# GitHub does not like too many requests at once so we wait a bit
+remote_heads_in_batches <- function(repos, refs){
+  ngroups <- ceiling(length(repos)/1000)
+  batch <- sample(seq_len(ngroups), length(repos), replace = TRUE)
+  output <- rep(NA, length(repos))
+  for(group in seq_len(ngroups)) {
+    sx <- batch == group
+    if(group > 1) {
+      message("Done! Waiting for a bit for the next batch...")
+      Sys.sleep(60)
+    }
+    message(sprintf("Starting batch %d of %d...", group, ngroups))
+    output[sx] <- remote_heads_many(repos[sx], refs[sx])
+  }
+  return(output)
 }
