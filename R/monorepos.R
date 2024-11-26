@@ -262,7 +262,7 @@ update_one_package <- function(x, update_pkg_remotes = FALSE, cleanup_after = FA
     r_pkg_dir <- ifelse(length(x$subdir) > 0, file.path(pkg_dir, x$subdir), pkg_dir)
     desc <- get_description_data(r_pkg_dir)
     if(!identical(desc$package, pkg_dir)){
-      delete_one_package(pkg_dir)
+      delete_one_package(pkg_dir) #NB: deleting here makes files out of sync with registry/.gitmodules
       errmsg <- sprintf("Package '%s' from registry does not match package name in description file: '%s'", pkg_dir, paste(desc$package, collapse = ""))
       if(nrow(gert::git_status(staged = TRUE))){
         # Pkg was already in the universe and needs to be removed now
