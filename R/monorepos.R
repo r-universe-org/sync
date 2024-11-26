@@ -263,7 +263,7 @@ update_one_package <- function(x, update_pkg_remotes = FALSE, cleanup_after = FA
     desc <- get_description_data(r_pkg_dir)
     if(!identical(desc$package, pkg_dir)){
       delete_one_package(pkg_dir)
-      errmsg <- sprintf("Package '%s' from registry does not match package name in description file: '%s'", pkg_dir, desc$package)
+      errmsg <- sprintf("Package '%s' from registry does not match package name in description file: '%s'", pkg_dir, paste(desc$package, collapse = ""))
       if(nrow(gert::git_status(staged = TRUE))){
         # Pkg was already in the universe and needs to be removed now
         commit_as_bot(errmsg)
