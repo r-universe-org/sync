@@ -92,6 +92,22 @@ git_cmd <- function(..., std_err = TRUE, timeout = 60){
   sys::exec_wait('git', args = c(...), std_err = std_err, timeout = timeout)
 }
 
+git_cmd_assert <- function(..., timeout = 60){
+  args <- c(...)
+  res <- sys::exec_internal('git', args = args, timeout = timeout, error = FALSE)
+  errtxt <- sys::as_text(res$stderr)
+  lapply(errtxt, cat, file = stderr(), "\n")
+  if(!identical(res$status, 0L)){
+    fatal_error <- grep('fatal', errtxt, value = TRUE)
+    if(length(fatal_error)){
+      errtxt <- sub("fatal:", "", fatal_error[1])
+    } else {
+    }
+    stop(sprintf('git %s: %s', args[1], paste(errtxt, collapse = "\n")))
+  }
+  return(res)
+}
+
 git_clone <- function(url, dest = NULL){
   for(i in 1:3){
     if(!git_cmd('clone', '--depth', '1', url, dest)){

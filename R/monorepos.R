@@ -113,7 +113,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   }
   check_new_release_tags()
   skiplist <- submodules_up_to_date(skip_broken = FALSE)
-  print_message("Submodules up-to-date:\n %s", paste(skiplist, collapse = '\n '))
+  print_message("Submodules up-to-date:\n %d", length(skiplist))
   dirty <- Filter(function(x){is.na(match(x$package, skiplist))}, registry[!registry_dups])
   results1 <- lapply(dirty, try_update_package, update_pkg_remotes = TRUE)
 
@@ -150,7 +150,9 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
 
   if(length(failures) > 0){
     pkgs <- vapply(failures, function(x){
-      message(sprintf("\nERROR updating %s from %s (%s)\n", x$package, x$url, attr(x, 'error')))
+      errmsg <- sprintf("ERROR updating %s from %s (%s)", x$package, x$url, attr(x, 'error'))
+      cat(sprintf("::error file=%s::%s\n", x$package, gsub("\\s+", " ", errmsg)))
+      #message(errmsg)
       x$package
     }, character(1))
     stop("Failed to update packages: ", paste(pkgs, collapse = ', '))
@@ -223,7 +225,7 @@ update_one_package <- function(x, update_pkg_remotes = FALSE, cleanup_after = FA
   if(submodule$status != 0){
     print_message("Adding new package '%s' from: %s", pkg_dir, pkg_url)
     branch_args <- if(!identical(pkg_branch, 'HEAD')) c('-b', pkg_branch)
-    sys::exec_wait("git", c("submodule", "add", branch_args, "--force", pkg_url, pkg_dir))
+    git_cmd_assert("submodule", "add", branch_args, "--force", pkg_url, pkg_dir)
     if(pkg_branch == '*release')
       pkg_branch <- update_release_branch(pkg_dir, pkg_url)
     gert::git_submodule_set_to(submodule = pkg_dir, ref = pkg_branch)
@@ -231,7 +233,7 @@ update_one_package <- function(x, update_pkg_remotes = FALSE, cleanup_after = FA
     submodule_head <- sub("^[+-]", "", sys::as_text(submodule$stdout))
     if(pkg_branch == '*release')
       pkg_branch <- update_release_branch(pkg_dir, pkg_url)
-    out <- sys::exec_internal('git', c("ls-remote", pkg_url, pkg_branch))
+    out <- git_cmd_assert("ls-remote", pkg_url, pkg_branch)
     if(length(out$stdout)){
       remote_head <- strsplit(sys::as_text(out$stdout), '\\W')[[1]][1]
     } else {
@@ -252,8 +254,8 @@ update_one_package <- function(x, update_pkg_remotes = FALSE, cleanup_after = FA
       return()
     }
     print_message("Updating package '%s' from: %s", pkg_dir, pkg_url)
-    sys::exec_wait("git", c("update-index", "--cacheinfo", "160000", remote_head, pkg_dir))
-    sys::exec_wait("git", c("submodule", "update", "--init", "--recommend-shallow", pkg_dir))
+    git_cmd_assert("update-index", "--cacheinfo", "160000", remote_head, pkg_dir)
+    git_cmd_assert("submodule", "update", "--init", "--recommend-shallow", pkg_dir)
   }
   gert::git_add(pkg_dir)
   if(!any(gert::git_status()$staged)){
@@ -517,7 +519,9 @@ get_description_data <- function(pkg_dir){
 }
 
 read_description_file <- function(path){
-  desc <- as.list(tools:::.read_description(path))
+  desc <- tryCatch(as.list(tools:::.read_description(path)), error = function(err){
+    stop("Failed to read DESCRIPTION: ", err)
+  })
   names(desc) <- tolower(names(desc))
   if(!length(desc[['maintainer']]) || identical(tolower(desc$maintainer), 'orphaned')){
     authors <- desc[['authors@r']]
