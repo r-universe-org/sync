@@ -129,7 +129,7 @@ parse_raw_gitpack <- function(buf){
 }
 
 remote_heads_many <- function(repos, refs = NULL, verbose = TRUE){
-  pool <- curl::multi_set(multiplex = TRUE, host_con = 1L) # Use default pool for
+  pool <- curl::multi_set(multiplex = TRUE, host_con = 1L, max_streams = 2) # Use default pool
   len <- length(repos)
   out <- rep(NA_character_, len)
   completed <- 0
@@ -172,7 +172,7 @@ remote_heads_many <- function(repos, refs = NULL, verbose = TRUE){
 
 # GitHub does not like too many requests at once so we wait a bit
 remote_heads_in_batches <- function(repos, refs){
-  ngroups <- ceiling(length(repos)/1000)
+  ngroups <- ceiling(length(repos)/3000)
   batch <- sample(seq_len(ngroups), length(repos), replace = TRUE)
   output <- rep(NA, length(repos))
   for(group in seq_len(ngroups)) {
