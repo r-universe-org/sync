@@ -224,8 +224,7 @@ update_one_package <- function(x, update_pkg_remotes = FALSE, cleanup_after = FA
   submodule <- sys::exec_internal("git", c("submodule", "status", pkg_dir), error = FALSE)
   if(submodule$status != 0){
     print_message("Adding new package '%s' from: %s", pkg_dir, pkg_url)
-    branch_args <- if(!identical(pkg_branch, 'HEAD')) c('-b', pkg_branch)
-    git_cmd_assert("submodule", "add", branch_args, "--force", pkg_url, pkg_dir)
+    git_cmd_assert("submodule", "add", "--force", pkg_url, pkg_dir)
     if(pkg_branch == '*release')
       pkg_branch <- update_release_branch(pkg_dir, pkg_url)
     gert::git_submodule_set_to(submodule = pkg_dir, ref = pkg_branch)
