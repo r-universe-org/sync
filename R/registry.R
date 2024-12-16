@@ -15,7 +15,7 @@ update_registry <- function(path = '.'){
   submodules <- gert::git_submodule_list(repo = repo)
 
   # Update .registry submodule (libgit2 does not support shallow clones)
-  git_cmd("submodule", "update", "--init", "--remote", "--recommend-shallow", "-f", '.registry')
+  git_cmd("submodule", "update", "--init", "--remote", "-f", '.registry')
   registry_commit <- gert::git_log(repo = I('.registry'), max = 1)
 
   # read registry
@@ -87,12 +87,12 @@ remove_submodule <- function(pkg){
   unlink(pkg, recursive = TRUE)
 }
 
-git_cmd <- function(..., std_err = TRUE, timeout = 60){
+git_cmd <- function(..., std_err = TRUE, timeout = 600){
   # Timeout is mostly in case of unexpected password prompts
   sys::exec_wait('git', args = c(...), std_err = std_err, timeout = timeout)
 }
 
-git_cmd_assert <- function(..., timeout = 60){
+git_cmd_assert <- function(..., timeout = 600){
   args <- c(...)
   res <- sys::exec_internal('git', args = args, timeout = timeout, error = FALSE)
   errtxt <- sys::as_text(res$stderr)
@@ -122,7 +122,7 @@ git_clone <- function(url, dest = NULL){
 
 git_submodule_shallow <- function(dest){
   for(i in 1:3){
-    if(!git_cmd("submodule", "update", "--init", "--remote", "--recommend-shallow", "-f", dest)){
+    if(!git_cmd("submodule", "update", "--init", "--remote", "-f", dest)){
       return(TRUE)
     }
     message("Retrying to submodule: ", dest)

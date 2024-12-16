@@ -65,7 +65,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   }
 
   # Sync with the user registry file (currently libgit2 does not support shallow clones, sadly)
-  res <- sys::exec_wait("git", c("submodule", "update", "--init", "--recommend-shallow", "--remote", '.registry'))
+  res <- sys::exec_wait("git", c("submodule", "update", "--init", "--remote", '.registry'))
 
   # If this fails, check if the personal registry still exists
   if(res != 0 || !file.exists('.registry/packages.json')){
@@ -74,7 +74,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
       if(is.null(newrepo)){
         switch_to_registry('r-universe-org/cran-to-git', validate = FALSE)
       }
-      sys::exec_wait("git", c("submodule", "update", "--init", "--recommend-shallow", "--remote", '.registry'))
+      sys::exec_wait("git", c("submodule", "update", "--init", "--remote", '.registry'))
     } else {
       stop("Failure cloning .registry repository")
     }
@@ -254,7 +254,8 @@ update_one_package <- function(x, update_pkg_remotes = FALSE, cleanup_after = FA
     }
     print_message("Updating package '%s' from: %s", pkg_dir, pkg_url)
     git_cmd_assert("update-index", "--cacheinfo", "160000", remote_head, pkg_dir)
-    git_cmd_assert("submodule", "update", "--init", "--recommend-shallow", pkg_dir)
+
+    git_cmd_assert("submodule", "update", "--init", pkg_dir)
   }
   gert::git_add(pkg_dir)
   if(!any(gert::git_status()$staged)){
@@ -647,6 +648,11 @@ set_release_version <- function(pkg, value){
   gert::git_add(".gitmodules")
 }
 
+set_submodule_shallow <- function(pkg){
+  field <- sprintf("submodule.%s.shallow", pkg)
+  sys::exec_internal('git', c("config", "-f", ".gitmodules", field, 'true'))
+}
+
 update_release_branch <- function(pkg_dir, pkg_url){
   pkg_branch <- if(grepl('gitlab.com', pkg_url)){
     lookup_gitlab_release(pkg_url)
@@ -710,7 +716,7 @@ switch_to_registry <- function(repo_name, validate = TRUE){
   sys::exec_wait("git", c("submodule", "deinit", "--force", ".registry"), std_err = FALSE)
   unlink(".git/modules/.registry", recursive = TRUE)
   sys::exec_wait("git", c("submodule", "set-url", ".registry", regrepo))
-  sys::exec_wait("git", c("submodule", "update", "--init", "--recommend-shallow", "--remote", '.registry'))
+  sys::exec_wait("git", c("submodule", "update", "--init", "--remote", '.registry'))
   if(isTRUE(validate)){
     pkgdf <- jsonlite::fromJSON('.registry/packages.json')
     if(!is.data.frame(pkgdf))
