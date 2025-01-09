@@ -740,8 +740,8 @@ update_registry_repo <- function(monorepo_name, current_registry){
   if(monorepo_name == 'r-multiverse-community'){
     return('r-multiverse/community')
   }
-  if(monorepo_name == 'r-multiverse-production'){
-    return('r-multiverse/production')
+  if(monorepo_name == 'r-multiverse-staging'){
+    return('r-multiverse/staging')
   }
   if(monorepo_name == 'ropensci-champions'){
     return('ropensci/champions-program')
