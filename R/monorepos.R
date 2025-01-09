@@ -217,6 +217,10 @@ update_one_package <- function(x, update_pkg_remotes = FALSE, cleanup_after = FA
   }
   pkg_url <- x$url
   pkg_branch <- ifelse(length(x$branch), x$branch, 'HEAD')
+  if(grepl('/', pkg_branch)){
+    # Disambiguate branches with slashes (e.g. cranhaven)
+    pkg_branch <- paste0("origin/", pkg_branch)
+  }
   if(isFALSE(x$available)){
     print_message("Skipping unavailable package %s", pkg_dir)
     return()
