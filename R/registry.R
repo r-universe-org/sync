@@ -89,11 +89,14 @@ remove_submodule <- function(pkg){
 
 git_cmd <- function(..., std_err = TRUE, timeout = 600){
   # Timeout is mostly in case of unexpected password prompts
-  sys::exec_wait('git', args = c(...), std_err = std_err, timeout = timeout)
+  args <- c(...)
+  cat("git", args, '\n', file = stderr())
+  sys::exec_wait('git', args, std_err = std_err, timeout = timeout)
 }
 
 git_cmd_assert <- function(..., timeout = 600){
   args <- c(...)
+  cat("git", args, '\n', file = stderr())
   res <- sys::exec_internal('git', args = args, timeout = timeout, error = FALSE)
   errtxt <- sys::as_text(res$stderr)
   lapply(errtxt, cat, file = stderr(), "\n")
