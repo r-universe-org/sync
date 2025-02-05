@@ -37,11 +37,10 @@ check_and_trigger <- function(universe){
 
 needs_update <- function(universe){
   if(universe == 'cran') {
-    if(format(Sys.time(), '%H') == '00') return("Everything")
-    return(cran_recently_updated())
+    return(github_last_update('cran'))
   }
   if(universe == 'bioc') {
-    return(metabioc_recently_updated())
+    return(github_last_update('bioc'))
   }
   retry(git_clone(paste0('https://github.com/r-universe/', universe)))
   fullpath <- normalizePath(universe)
@@ -105,20 +104,42 @@ trigger_workflow <- function(universe, workflow = 'sync.yml', inputs = NULL){
   gh::gh(url, .method = 'POST', ref = 'master', inputs = inputs)
 }
 
-# TODO: this may not work as intended because metacran lags behind CRAN
-cran_recently_updated <- function(hours = 1){
+cran_recent_updates <- function(days = 1){
   tmp <- tempfile()
   on.exit(unlink(tmp))
   curl::curl_download('https://cloud.r-project.org/web/packages/packages.rds', destfile = tmp)
   cran <- as.data.frame(readRDS(tmp), stringsAsFactors = FALSE)
-  cran$age <- difftime(Sys.time(),  as.POSIXct(cran[['Date/Publication']]), units = 'hours')
-  cran$Package[cran$age < hours]
+  cran$age <- difftime(Sys.time(),  as.POSIXct(cran[['Date/Publication']]), units = 'days')
+  cran$Package[cran$age < days]
 }
 
-metabioc_recently_updated <- function(hours = 1){
-  latest <- gh::gh("/orgs/bioc/repos", sort='pushed', per_page = 1)[[1]]
+bioc_recent_updates <- function(days = 1){
+  yml <- yaml::read_yaml("https://bioconductor.org/config.yaml")
+  bioc <- jsonlite::read_json(sprintf('https://bioconductor.org/packages/json/%s/bioc/packages.json', yml$devel_version))
+  stopifnot(length(bioc) > 2100)
+  dates <- as.Date(vapply(bioc, function(x) as.character(x$git_last_commit_date)[1], character(1)))
+  names(which(Sys.Date()-dates < days))
+}
+
+github_recent_updates <- function(org = 'cran', max = 100){
+  repos <- gh::gh("/orgs/{org}/repos", sort='pushed', per_page = max, org = org)
+  vapply(repos, function(x) x$name, character(1))
+}
+
+make_filter_list <- function(org){
+  if(org == 'cran'){
+    return(c(cran_recent_updates(7), github_recent_updates('cran')))
+  }
+  if(org == 'bioc'){
+    # TODO: at time of a new bioc release this can be high for a while
+    return(c(bioc_recent_updates(30), github_recent_updates('bioc')))
+  }
+}
+
+github_last_update <- function(org, hours = 1){
+  latest <- gh::gh("/orgs/{org}/repos", org = org, sort = 'pushed', per_page = 1)[[1]]
   pushed <- as.POSIXct(sub("T", " ", latest$pushed_at), tz = 'UTC')
   if(difftime(Sys.time(),  pushed, units = 'hours') < hours){
-    return('Everything')
+    return(latest$name)
   }
 }

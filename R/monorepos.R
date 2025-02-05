@@ -112,7 +112,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
     print_message("Registry has DUPLICATED packages: '%s'", registry_pkgs[registry_dups])
   }
   check_new_release_tags()
-  skiplist <- submodules_up_to_date(skip_broken = FALSE)
+  skiplist <- submodules_up_to_date(skip_broken = FALSE, filter_packages = make_filter_list(monorepo_name))
   print_message("Submodules up-to-date: %d", length(skiplist))
   dirty <- Filter(function(x){is.na(match(x$package, skiplist))}, registry[!registry_dups])
   results1 <- lapply(dirty, try_update_package, update_pkg_remotes = TRUE)

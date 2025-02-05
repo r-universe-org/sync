@@ -42,13 +42,20 @@ update_submodules <- function(path = '.', skip = '.registry'){
 
 #' @export
 #' @rdname sync
-submodules_up_to_date <- function(skip_broken = TRUE, path = '.'){
+submodules_up_to_date <- function(skip_broken = TRUE, filter_packages = NULL, path = '.'){
   withr::local_dir(path)
   repo <- gert::git_open(path)
   submodules <- gert::git_submodule_list(repo = repo)
+  skiplist <- NULL
+  if(length(filter_packages)){
+    do_check <- submodules$path %in% filter_packages
+    skiplist <- submodules$path[!do_check]
+    submodules <- submodules[do_check,]
+    print_message("Skipping check for %d packages without recent activity", length(skiplist))
+  }
   submodules$upstream <- remote_heads_in_batches(submodules$url, submodules$branch)
   isok <- which(submodules$upstream == submodules$head)
-  fine <- submodules$path[isok]
+  fine <- c(submodules$path[isok], skiplist)
   broken <- submodules[is.na(submodules$upstream),]
   for(i in seq_len(nrow(broken))){
     module <- as.list(broken[i,])
