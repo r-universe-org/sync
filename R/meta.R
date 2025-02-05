@@ -36,11 +36,8 @@ check_and_trigger <- function(universe){
 }
 
 needs_update <- function(universe){
-  if(universe == 'cran') {
-    return(github_last_update('cran'))
-  }
-  if(universe == 'bioc') {
-    return(github_last_update('bioc'))
+  if(universe == 'cran' || universe == 'bioc') {
+    return(github_last_update(universe)) # Special case huge repos
   }
   retry(git_clone(paste0('https://github.com/r-universe/', universe)))
   fullpath <- normalizePath(universe)
