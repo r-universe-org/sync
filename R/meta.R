@@ -36,8 +36,9 @@ check_and_trigger <- function(universe){
 }
 
 needs_update <- function(universe){
+  # Do not do full scan huge repos
   if(universe == 'cran' || universe == 'bioc') {
-    return(github_last_update(universe)) # Special case huge repos
+    return(github_last_update(universe))
   }
   retry(git_clone(paste0('https://github.com/r-universe/', universe)))
   fullpath <- normalizePath(universe)
@@ -128,7 +129,8 @@ make_filter_list <- function(org){
     return(c(cran_recent_updates(7), github_recent_updates('cran')))
   }
   if(org == 'bioc'){
-    # TODO: at time of a new bioc release this can be high for a while
+    # TODO: at time of a new bioc release bioc_recent_updates() returns everything
+    # However sometimes metacran mirror is stalled for few days.
     return(c(bioc_recent_updates(30), github_recent_updates('bioc')))
   }
 }
