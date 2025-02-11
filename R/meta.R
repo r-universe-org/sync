@@ -84,7 +84,10 @@ needs_update <- function(universe){
     update_gitmodules()
     write_metadata_json()
     update_config_json()
-    if(all(is.na(match(c('.gitmodules', '.config.json', '.metadata.json'), gert::git_status()$file)))){
+    registry_changes <- intersect(c('.gitmodules', '.config.json', '.metadata.json'), gert::git_status()$file)
+    if(length(registry_changes)){
+      print_message("Registry sync in '%s' triggered for %s", universe, registry_changes)
+    } else {
       dirty <- setdiff(dirty, '.registry') # No effective registry changes
     }
   }
