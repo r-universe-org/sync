@@ -82,8 +82,10 @@ needs_update <- function(universe){
       retry(git_submodule_shallow('.registry'))
     }
     update_gitmodules()
-    if(is.na(match('.gitmodules', gert::git_status()$file))){
-      dirty <- setdiff(dirty, '.registry') # No update needed
+    write_metadata_json()
+    update_config_json()
+    if(all(is.na(match(c('.gitmodules', '.config.json', '.metadata.json'), gert::git_status()$file)))){
+      dirty <- setdiff(dirty, '.registry') # No effective registry changes
     }
   }
   return(dirty)
