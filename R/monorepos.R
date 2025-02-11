@@ -84,6 +84,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   registry_commit <- gert::git_log(repo = I('.registry'), max = 1)
   update_gitmodules()
   write_metadata_json()
+  update_config_json()
 
   # Very basic fair use check for now
   registry_name <- basename(gert::git_submodule_info(".registry")$url)
@@ -92,7 +93,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
       stop("Personal universes are currently limited to 150 packages")
     }
   }
-  gert::git_add(c('.gitmodules', '.metadata.json'))
+  gert::git_add(c('.gitmodules', '.metadata.json', '.config.json'))
   if(any(gert::git_status()$staged)){
     print_message("Sync registry with upstream")
     if('.gitmodules' %in% gert::git_status(staged = TRUE)$file)
@@ -585,6 +586,12 @@ write_metadata_json <- function(){
     unlink('.metadata.json')
   } else {
     jsonlite::write_json(df, '.metadata.json', pretty = TRUE)
+  }
+}
+
+update_config_json <- function(){
+  if(file.exists('.registry/config.json')){
+    file.copy('.registry/config.json', '.config.json', overwrite = TRUE)
   }
 }
 
