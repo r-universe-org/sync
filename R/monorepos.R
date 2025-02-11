@@ -592,6 +592,8 @@ write_metadata_json <- function(){
 update_config_json <- function(){
   if(file.exists('.registry/config.json')){
     file.copy('.registry/config.json', '.config.json', overwrite = TRUE)
+  } else {
+    unlink('.config.json')
   }
 }
 
