@@ -578,14 +578,25 @@ write_metadata_json <- function(){
   isrelease <- vapply(registry, function(x){
     ifelse(identical(x$branch, '*release'), TRUE, NA)
   }, logical(1))
-  df <- data.frame(package = packages, releasetag = isrelease)
+  outlist <- lapply(registry, function(pkg){
+    x <- list(package = pkg$package)
+    if(length(pkg$metadata)){
+      x$metadata <- pkg$metadata
+    }
+    if(identical(pkg$branch, '*release')){
+      x$releasetag = TRUE
+    }
+    return(x)
+  })
 
   # Filter empty entries
-  df <- df[which(isrelease),]
-  if(nrow(df) == 0){
+  outlist <- Filter(function(x){!identical(x, list(package = x$package))}, outlist)
+
+  # Do not store empty lists
+  if(length(outlist) == 0){
     unlink('.metadata.json')
   } else {
-    jsonlite::write_json(df, '.metadata.json', pretty = TRUE)
+    jsonlite::write_json(outlist, '.metadata.json', pretty = TRUE, auto_unbox = TRUE)
   }
 }
 
