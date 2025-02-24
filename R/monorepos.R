@@ -283,9 +283,6 @@ update_one_package <- function(x, update_pkg_remotes = FALSE, cleanup_after = FA
       }
       stop(errmsg)
     }
-    if('config/runiverse/noindex' %in% names(desc)){
-      stop(sprintf("Package '%s' has noindex in description file", desc$package))
-    }
     if(isTRUE(update_pkg_remotes)){
       update_remotes_json(desc)
       update_gitmodules()
