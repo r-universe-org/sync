@@ -7,7 +7,7 @@ trigger_syncs <- function(){
   skiplist <- c("actions", "workflows")
   universes <- setdiff(unique(list_universes()), skiplist)
   git_clone('https://github.com/r-universe-org/cran-to-git', '/tmp/cran-to-git')
-  git_clone('https://github.com/r-universe/workflows', '/tmp/workflows')
+  git_clone('https://github.com/r-universe-org/workflows', '/tmp/workflows')
   results <- lapply(universes, check_and_trigger)
   names(results) <- universes
   out <- Filter(length, results)

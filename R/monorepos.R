@@ -785,7 +785,7 @@ update_registry_repo <- function(monorepo_name, current_registry){
 
 update_workflows <- function(monorepo_name){
   workflows <- tempfile()
-  gert::git_clone('https://github.com/r-universe/workflows', workflows)
+  gert::git_clone('https://github.com/r-universe-org/workflows', workflows)
   if(monorepo_name == "test" || monorepo_name == 'jeroen'){
     print_message("This is the 'test' universe. Looking for a 'test' branch in workflows.")
     tryCatch(gert::git_branch_checkout('test', repo = I(workflows)), error = function(e){
