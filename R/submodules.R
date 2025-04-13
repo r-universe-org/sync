@@ -6,7 +6,7 @@ submodules_up_to_date <- function(skip_broken = TRUE, filter_packages = NULL, pa
   submodules <- gert::git_submodule_list(repo = repo)
   skiplist <- NULL
   if(length(filter_packages)){
-    do_check <- submodules$path %in% filter_packages
+    do_check <- (submodules$path %in% filter_packages) | (submodules$head == "")
     skiplist <- submodules$path[!do_check]
     submodules <- submodules[do_check,]
     print_message("Skipping check for %d packages without recent activity", length(skiplist))
