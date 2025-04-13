@@ -839,12 +839,29 @@ metacran_dummy_registry <- function(archived_days = 60, skip = 'request'){
   if(length(winonly)){
     cran <- cran[-winonly,]
   }
-  archived <- read.csv('https://r-universe-org.github.io/cran-to-git/archived.csv')
+  #archived <- read.csv('https://r-universe-org.github.io/cran-to-git/archived.csv')
+  archived <- cran_archived_db()
   archived$age <- Sys.Date() - as.Date(archived$Date)
   archived <- archived[archived$age < archived_days & !grepl(skip, archived$Reason, ignore.case = TRUE),]
   pkgs <- sort(unique(c(cran$Package, archived$Package)))
   stopifnot(length(pkgs) > 20000)
   lapply(pkgs, function(x){list(package = x, url = paste0("https://github.com/cran/", x ))})
+}
+
+# Copied from cranscraper
+cran_archived_db <- function(){
+  con <- url("https://cloud.r-project.org/src/contrib/PACKAGES.in")
+  on.exit(close(con))
+  db <- as.data.frame(read.dcf(con))
+  comments <- db[['X-CRAN-Comment']]
+  pattern <- "(Removed|Archived) on ([0-9-]+)"
+  m <- regexec(pattern, comments)
+  db$Date <- as.Date(vapply(regmatches(comments, m), function(x){
+    x[3]
+  }, character(1)))
+  db <- db[!is.na(db$Package)  & !is.na(db$Date) & db$Date >= '2022-01-01',]
+  db$Reason <- gsub("\\s", " ", trimws(sub(" as|for", "", sub(pattern, '', db[['X-CRAN-Comment']]))))
+  db[order(db$Package),c("Package", "Date", "Reason")]
 }
 
 # Same list as 'cranscraper'
