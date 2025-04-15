@@ -38,7 +38,7 @@ check_and_trigger <- function(universe){
 needs_update <- function(universe){
   # Do not do full scan huge repos
   if(universe == 'cran' || universe == 'bioc') {
-    return(github_last_update(universe))
+    return(github_last_update(universe, 3))
   }
   retry(git_clone(paste0('https://github.com/r-universe/', universe)))
   fullpath <- normalizePath(universe)
