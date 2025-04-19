@@ -136,7 +136,7 @@ make_filter_list <- function(org){
   if(org == 'bioc'){
     # TODO: at time of a new bioc release bioc_recent_updates() returns everything
     # However sometimes metacran mirror is stalled for few days.
-    return(unique(c(bioc_recent_updates(30), github_recent_updates('bioc'))))
+    return(unique(c(bioc_recent_updates(7), github_recent_updates('bioc'))))
   }
 }
 
