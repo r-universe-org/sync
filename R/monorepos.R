@@ -208,7 +208,7 @@ delete_one_package <- function(pkg_dir){
   unlink(pkg_dir, recursive = TRUE)
   update_remotes_json(desc = list(package = pkg_dir))
   update_gitmodules()
-  gert::git_add(c('.remotes.json', '.gitmodules'))
+  gert::git_add(c('.remotes.json', '.gitmodules', pkg_dir))
 }
 
 # Sync the registry packages with the monorepo
