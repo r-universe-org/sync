@@ -662,6 +662,26 @@ lookup_gitlab_release <- function(pkg_url){
   })
 }
 
+lookup_codeberg_release <- function(pkg_url){
+  tryCatch({
+    p <- remotes::parse_github_url(sub("codeberg.org", "github.com", pkg_url, fixed = TRUE))
+    endpoint <- sprintf(
+      "https://codeberg.org/api/v1/repos/%s/%s/releases",
+      p$username,
+      p$repo)
+    releases <- jsonlite::fromJSON(endpoint, simplifyVector = FALSE)
+    releases <- Filter(function(x){
+      !isTRUE(x$prerelease) # fix la 
+    }, releases)
+    if(!length(releases))
+      stop("No releases found for ", pkg_url)
+    releases[[1]]$tag_name
+  }, error = function(e){
+    message(sprintf("Failed to find *release for: %s: %s", pkg_url, e$message))
+    return('*release') # Fall back to non existing branch behavior
+  })
+}
+
 get_release_version <- function(pkg){
   field <- sprintf("submodule.%s.branch", pkg)
   out <- sys::exec_internal('git', c("config", "-f", ".gitmodules", "--get", field), error = FALSE)
@@ -684,8 +704,10 @@ update_release_branch <- function(pkg_dir, pkg_url){
     lookup_gitlab_release(pkg_url)
   } else if(grepl('github.com', pkg_url)) {
     lookup_github_release(pkg_url)
+  } else if(grepl('codeberg.org', pkg_url)){
+    lookup_codeberg_release(pkg_url)
   } else {
-    stop('A "branch":"*release" is only supported github or gitlab URLs')
+    stop('A "branch":"*release" is only supported github, gitlab and codeberg URLs')
   }
   if(identical(pkg_branch, get_release_version(pkg_dir))){
     print_message("Latest release version unchanged: %s %s", pkg_dir, pkg_branch)
