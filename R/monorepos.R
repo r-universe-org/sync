@@ -461,7 +461,10 @@ read_registry_list <- function(){
     return(metacran_dummy_registry())
   }
   if(universe == 'bioc'){
-    return(metabioc_dummy_registry())
+    return(metabioc_devel_registry())
+  }
+  if(universe == 'bioc-release'){
+    return(metabioc_release_registry())
   }
   jsonfile <- sprintf('.registry/%s.json', universe)
   registry <- if(file.exists(jsonfile)){
@@ -865,8 +868,8 @@ cran_archived_db <- function(){
 }
 
 # Same list as 'cranscraper'
-metabioc_dummy_registry <- function(){
-  nomirror <- c('SwathXtend', 'h5vc') # large git files
+metabioc_devel_registry <- function(){
+  nomirror <- c('SwathXtend', 'h5vc', 'scafari') # large git files
   skiplist <- c('IntOMICS') # package was renamed bc trademarks
   yml <- yaml::read_yaml("https://bioconductor.org/config.yaml")
   bioc_version <- yml$devel_version
@@ -876,6 +879,20 @@ metabioc_dummy_registry <- function(){
   lapply(setdiff(names(bioc), skiplist), function(x){
     baseurl <- ifelse(x %in% nomirror, "https://git.bioconductor.org/packages/", "https://github.com/bioc/")
     list(package = x, url = paste0(baseurl, x ))
+  })
+}
+
+metabioc_release_registry <- function(){
+  nomirror <- c('SwathXtend', 'h5vc', 'scafari') # large git files
+  yml <- yaml::read_yaml("https://bioconductor.org/config.yaml")
+  bioc_version <- yml$release_version
+  bioc <- jsonlite::read_json(sprintf('https://bioconductor.org/packages/json/%s/bioc/packages.json', bioc_version))
+  stopifnot(length(bioc) > 2100)
+  bioc <- Filter(function(x) !identical(x$PackageStatus, 'Deprecated') || identical(x$Package, 'zlibbioc'), bioc)
+  lapply(bioc, function(pkginfo){
+    x <- pkginfo$Package
+    baseurl <- ifelse(x %in% nomirror, "https://git.bioconductor.org/packages/", "https://github.com/bioc/")
+    list(package = x, url = paste0(baseurl, x), branch = pkginfo$git_branch)
   })
 }
 
