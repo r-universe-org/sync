@@ -892,6 +892,8 @@ metabioc_release_registry <- function(){
 }
 
 rebuild_missing <- function(monorepo_name){
+  # Hack hack
+  if(monorepo_name == 'bioc-release') return()
   missings <- setdiff(list.files(), universe_ls(monorepo_name))
   if(length(missings)){
     message("Missing source packages: ", paste(missings, collapse = ', '))
