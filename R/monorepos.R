@@ -48,14 +48,6 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   # Check for changes in GHA scripts
   update_workflows(monorepo_name)
 
-  # Check for potentially missing source packages
-  missings <- setdiff(list.files(), universe_ls(monorepo_name))
-  if(length(missings)){
-    message("Missing source packages: ", paste(missings, collapse = ', '))
-    lapply(missings, function(pkg){
-      try(trigger_rebuild(monorepo_name, pkg))
-    })
-  }
 
   # Consider switching to a personal registry if available
   current_registry <- url_to_repo(gert::git_submodule_info(".registry")$url)
@@ -144,6 +136,9 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   } else {
     print_message("No packages to delete. Everything is up-to-date")
   }
+
+  # Check for potentially missing source packages
+  rebuild_missing(monorepo_name)
 
   # Check for update failures
   failures <- Filter(function(x){
@@ -894,6 +889,16 @@ metabioc_release_registry <- function(){
     baseurl <- ifelse(x %in% nomirror, "https://git.bioconductor.org/packages/", "https://github.com/bioc/")
     list(package = x, url = paste0(baseurl, x), branch = pkginfo$git_branch)
   })
+}
+
+rebuild_missing <- function(monorepo_name){
+  missings <- setdiff(list.files(), universe_ls(monorepo_name))
+  if(length(missings)){
+    message("Missing source packages: ", paste(missings, collapse = ', '))
+    lapply(missings, function(pkg){
+      try(trigger_rebuild(monorepo_name, pkg))
+    })
+  }
 }
 
 universe_ls <- function(universe){
