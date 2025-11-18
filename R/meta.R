@@ -5,6 +5,7 @@
 #' @export
 trigger_syncs <- function(){
   check_github_status()
+  check_cloudflare_status()
   skiplist <- c("actions", "workflows")
   universes <- setdiff(unique(list_universes()), skiplist)
   git_clone('https://github.com/r-universe-org/cran-to-git', '/tmp/cran-to-git')
