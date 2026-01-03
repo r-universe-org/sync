@@ -669,7 +669,7 @@ lookup_codeberg_release <- function(pkg_url){
       p$repo)
     releases <- jsonlite::fromJSON(endpoint, simplifyVector = FALSE)
     releases <- Filter(function(x){
-      !isTRUE(x$prerelease) # fix la 
+      !isTRUE(x$prerelease) # fix la
     }, releases)
     if(!length(releases))
       stop("No releases found for ", pkg_url)
@@ -915,12 +915,17 @@ metabioc_release_registry <- function(){
 }
 
 rebuild_missing <- function(monorepo_name){
-  missings <- setdiff(list.files(), universe_ls(monorepo_name))
+  existing <- universe_ls(monorepo_name)
+  missings <- setdiff(list.files(), existing)
   if(length(missings)){
     message("Missing source packages: ", paste(missings, collapse = ', '))
     lapply(missings, function(pkg){
       try(trigger_rebuild(monorepo_name, pkg))
     })
+  }
+  if(length(setdiff(existing, list.files()))){
+    message("Triggering cleanup for old packages")
+    try(trigger_cleanup(monorepo_name))
   }
 }
 
@@ -932,4 +937,9 @@ trigger_rebuild <- function(repository, pkg){
   cat(sprintf("Rebuilding %s/%s\n", repository, pkg))
   url <- sprintf('/repos/r-universe/%s/actions/workflows/build.yml/dispatches', repository)
   gh::gh(url, .method = 'POST', ref = 'master', inputs = list(package = pkg))
+}
+
+trigger_cleanup <- function(repository){
+  url <- sprintf('/repos/r-universe/%s/actions/workflows/cleanup.yml/dispatches', repository)
+  gh::gh(url, .method = 'POST', ref = 'master')
 }
