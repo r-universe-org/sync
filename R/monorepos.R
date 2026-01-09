@@ -290,7 +290,9 @@ update_one_package <- function(x, update_pkg_remotes = FALSE, cleanup_after = FA
     validate_signature(sig) # validates email syntax from description
     sig <- paste(sig, unclass(pkg_commit$time)) # add timestamp
     git_cmd("pull", "--rebase")
-    gert::git_commit(message = paste(desc$package, desc$version), author = sig)
+    committer <- paste("r-universe[bot] <74155986+r-universe[bot]@users.noreply.github.com>", unclass(Sys.time()))
+    gert::git_commit(message = paste(desc$package, desc$version),
+                     author = sig, committer = committer)
     gert::git_push(verbose = TRUE)
     if(cleanup_after){
       sys::exec_wait("git", c("submodule", "deinit", pkg_dir), std_out = FALSE)
@@ -920,7 +922,11 @@ rebuild_missing <- function(monorepo_name){
   if(length(missings)){
     message("Missing source packages: ", paste(missings, collapse = ', '))
     lapply(missings, function(pkg){
-      try(trigger_rebuild(monorepo_name, pkg))
+      if(difftime(Sys.time(), gert::git_stat_files(pkg)$modified, units='hours') < 1){
+        message("Skipping newly added package ", pkg)
+      } else {
+        try(trigger_rebuild(monorepo_name, pkg))
+      }
     })
   }
   if(length(setdiff(existing, list.files()))){
