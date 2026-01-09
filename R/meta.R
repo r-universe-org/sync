@@ -118,9 +118,10 @@ cran_recent_updates <- function(days = 1){
   cran$Package[cran$age < days]
 }
 
-bioc_recent_updates <- function(days = 1){
+bioc_recent_updates <- function(days = 14, release = FALSE){
   yml <- yaml::read_yaml("https://bioconductor.org/config.yaml")
-  bioc <- jsonlite::read_json(sprintf('https://bioconductor.org/packages/json/%s/bioc/packages.json', yml$devel_version))
+  version <- ifelse(release, yml$release_version, yml$devel_version)
+  bioc <- jsonlite::read_json(sprintf('https://bioconductor.org/packages/json/%s/bioc/packages.json', version))
   stopifnot(length(bioc) > 2100)
   dates <- as.Date(vapply(bioc, function(x) as.character(x$git_last_commit_date)[1], character(1)))
   names(which(Sys.Date()-dates < days))
@@ -132,13 +133,20 @@ github_recent_updates <- function(org = 'cran', max = 100){
 }
 
 make_filter_list <- function(org){
+  if(format(Sys.time(), "%a-%H") == 'Sun-00'){
+    return(NULL)
+  }
   if(org == 'cran'){
     return(unique(c(cran_recent_updates(7), github_recent_updates('cran'))))
   }
   if(org == 'bioc'){
     # TODO: at time of a new bioc release bioc_recent_updates() returns everything
     # However sometimes metacran mirror is stalled for few days.
-    return(unique(c(bioc_recent_updates(7), github_recent_updates('bioc'))))
+    return(unique(c(bioc_recent_updates(7, release = FALSE), github_recent_updates('bioc'))))
+  }
+
+  if(org == 'bioc-release'){
+    return(unique(c(bioc_recent_updates(7, release = TRUE), github_recent_updates('bioc'))))
   }
 }
 
