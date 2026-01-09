@@ -921,8 +921,10 @@ rebuild_missing <- function(monorepo_name){
   missings <- setdiff(list.files(), existing)
   if(length(missings)){
     message("Missing source packages: ", paste(missings, collapse = ', '))
+    filestats <- gert::git_stat_files(missings, max = 200)
     lapply(missings, function(pkg){
-      if(difftime(Sys.time(), gert::git_stat_files(pkg)$modified, units='hours') < 1){
+      mtime <- filestats[filestats$file == pkg, ]$modified
+      if(isTRUE(difftime(Sys.time(), mtime, units = 'hours') < 2)){
         message("Skipping newly added package ", pkg)
       } else {
         try(trigger_rebuild(monorepo_name, pkg))
