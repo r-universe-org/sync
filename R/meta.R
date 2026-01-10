@@ -118,6 +118,29 @@ cran_recent_updates <- function(days = 1){
   cran$Package[cran$age < days]
 }
 
+bioc_skiplist <- function(release = FALSE){
+  yml <- yaml::read_yaml("https://bioconductor.org/config.yaml")
+  version <- ifelse(release, yml$release_version, yml$devel_version)
+  bioc_url <- sprintf('https://bioconductor.org/packages/json/%s/bioc/packages.json', version)
+  bioc <- jsonlite::read_json(bioc_url)
+  stopifnot(length(bioc) > 2100)
+  submodules <- gert::git_submodule_list()
+  bioc <- Filter(function(info){
+    if(!length(info$git_last_commit)) {
+      message("Missing git_last_commit for ", info$Package)
+      return(TRUE)
+    }
+    current <- submodules[submodules$name == info$Package,]$head
+    if(!length(current)) {
+      message("Unknown package in metadata ", info$Package)
+      return(FALSE)
+    }
+    !isTRUE(grepl(info$git_last_commit, current, fixed = TRUE))
+  }, bioc)
+  message(sprintf("Found %d packages out of sync with: %s", length(bioc), bioc_url))
+  names(bioc)
+}
+
 bioc_recent_updates <- function(days = 14, release = FALSE){
   yml <- yaml::read_yaml("https://bioconductor.org/config.yaml")
   version <- ifelse(release, yml$release_version, yml$devel_version)
@@ -142,11 +165,11 @@ make_filter_list <- function(org){
   if(org == 'bioc'){
     # TODO: at time of a new bioc release bioc_recent_updates() returns everything
     # However sometimes metacran mirror is stalled for few days.
-    return(unique(c(bioc_recent_updates(7, release = FALSE), github_recent_updates('bioc'))))
+    return(unique(c(bioc_skiplist(release = FALSE), github_recent_updates('bioc'))))
   }
 
   if(org == 'bioc-release'){
-    return(unique(c(bioc_recent_updates(7, release = TRUE), github_recent_updates('bioc'))))
+    return(unique(c(bioc_skiplist(release = TRUE), github_recent_updates('bioc'))))
   }
 }
 
