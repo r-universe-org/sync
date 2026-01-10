@@ -39,8 +39,11 @@ check_and_trigger <- function(universe){
 
 needs_update <- function(universe){
   # Do not do full scan huge repos
-  if(universe == 'cran' || universe == 'bioc') {
-    return(github_last_update(universe, 3))
+  if(universe == 'cran'){
+    return(github_last_update('cran', 3))
+  }
+  if(universe == 'bioc' || universe == 'bioc-release'){
+    return(github_last_update('bioc', 3))
   }
   retry(git_clone(paste0('https://github.com/r-universe/', universe)))
   fullpath <- normalizePath(universe)
@@ -174,6 +177,9 @@ make_filter_list <- function(org){
 }
 
 github_last_update <- function(org, hours = 1){
+  if(format(Sys.time(), "%a-%H") == 'Sun-00'){
+    return('.registry') # Weekly full scan
+  }
   latest <- gh::gh("/orgs/{org}/repos", org = org, sort = 'pushed', per_page = 1)[[1]]
   pushed <- as.POSIXct(sub("T", " ", latest$pushed_at), tz = 'UTC')
   if(difftime(Sys.time(),  pushed, units = 'hours') < hours){
