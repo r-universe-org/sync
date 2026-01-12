@@ -18,7 +18,5 @@ Imports:
     remotes,
     withr,
     yaml
-Remotes: 
-    jeroen/gert
 RoxygenNote: 7.3.2
 License: Apache License 2.0
