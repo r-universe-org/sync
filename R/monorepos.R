@@ -888,7 +888,7 @@ cran_archived_db <- function(){
 
 # Same list as 'cranscraper'
 metabioc_devel_registry <- function(){
-  nomirror <- c('SwathXtend', 'h5vc', 'scafari') # large git files
+  nomirror <- c('SwathXtend', 'h5vc', 'scafari', 'singIST') # large git files
   skiplist <- c('IntOMICS') # package was renamed bc trademarks
   yml <- yaml::read_yaml("https://bioconductor.org/config.yaml")
   bioc_version <- yml$devel_version
@@ -902,7 +902,7 @@ metabioc_devel_registry <- function(){
 }
 
 metabioc_release_registry <- function(){
-  nomirror <- c('SwathXtend', 'h5vc', 'scafari') # large git files
+  nomirror <- c('SwathXtend', 'h5vc', 'scafari', 'singIST') # large git files
   yml <- yaml::read_yaml("https://bioconductor.org/config.yaml")
   bioc_version <- yml$release_version
   bioc <- jsonlite::read_json(sprintf('https://bioconductor.org/packages/json/%s/bioc/packages.json', bioc_version))
