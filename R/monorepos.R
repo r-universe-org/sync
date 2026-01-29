@@ -109,21 +109,29 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   skiplist <- submodules_up_to_date(skip_broken = FALSE, filter_packages = make_filter_list(monorepo_name))
   print_message("Submodules up-to-date: %d", length(skiplist))
   dirty <- Filter(function(x){is.na(match(x$package, skiplist))}, registry[!registry_dups])
-  results1 <- lapply(dirty, try_update_package, update_pkg_remotes = TRUE)
+  use_remotes <- identical(basename(gert::git_submodule_info(".registry")$url), "cran-to-git") && !grepl('^bioc', monorepo_name)
+  results1 <- lapply(dirty, try_update_package, update_pkg_remotes = use_remotes)
 
-  # Should not be needed but sometimes remotes linger around
-  cleanup_remotes_list()
+  if(use_remotes){
+    print_message("Checking remotes list...")
+    # Should not be needed but sometimes remotes linger around
+    cleanup_remotes_list()
 
-  # Now update all remotes (possibly new ones from package updates)
-  # Filter out packages that already exist in the main package registry
-  remotes <- read_remotes_list()
-  remotes <- Filter(function(x){is.na(match(x$package, registry_pkgs))}, remotes)
+    # Now update all remotes (possibly new ones from package updates)
+    # Filter out packages that already exist in the main package registry
+    remotes <- read_remotes_list()
+    remotes <- Filter(function(x){is.na(match(x$package, registry_pkgs))}, remotes)
 
-  # Filter duplicates
-  remotes_pkgs <- vapply(remotes, function(x){x$package}, character(1))
-  remotes_dups <- duplicated(remotes_pkgs)
-  dirty_remotes <- Filter(function(x){is.na(match(x$package, skiplist))}, remotes[!remotes_dups])
-  results2 <- lapply(dirty_remotes, try_update_package)
+    # Filter duplicates
+    remotes_pkgs <- vapply(remotes, function(x){x$package}, character(1))
+    remotes_dups <- duplicated(remotes_pkgs)
+    dirty_remotes <- Filter(function(x){is.na(match(x$package, skiplist))}, remotes[!remotes_dups])
+    results2 <- lapply(dirty_remotes, try_update_package)
+  } else {
+    unlink(".remotes.json")
+    remotes <- NULL
+    results2 <- NULL
+  }
 
   # Finally get rid of deleted packages
   packages <- vapply(c(registry, remotes), function(x){x$package}, character(1))
