@@ -136,8 +136,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   # Finally get rid of deleted packages
   packages <- vapply(c(registry, remotes), function(x){x$package}, character(1))
   remove_packages <- setdiff(list.files(repo), packages)
-  if(length(remove_packages) || (".remotes.json" %in% gert::git_status()$file)){
-    gert::git_add('.remotes.json')
+  if(length(remove_packages)){
     msg <- paste("Deleting packages:", paste0(remove_packages, collapse = ', '))
     lapply(remove_packages, delete_one_package)
     gert::git_commit(msg, registry_commit$author)
