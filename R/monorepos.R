@@ -880,9 +880,11 @@ metacran_dummy_registry <- function(archived_days = 60, skip = 'request'){
 
 # Copied from cranscraper
 cran_archived_db <- function(){
+  skiplist <- c('usearchlite')
   con <- url("https://cloud.r-project.org/src/contrib/PACKAGES.in")
   on.exit(close(con))
   db <- as.data.frame(read.dcf(con))
+  db <- db[!(db$Package %in% skiplist),]
   comments <- db[['X-CRAN-Comment']]
   pattern <- "(Removed|Archived) on ([0-9-]+)"
   m <- regexec(pattern, comments)
