@@ -948,7 +948,15 @@ rebuild_missing <- function(monorepo_name){
 }
 
 universe_ls <- function(universe){
-  jsonlite::fromJSON(sprintf('https://%s.r-universe.dev/api/ls', universe))
+  url <- sprintf('https://%s.r-universe.dev/api/ls', universe)
+  req <- curl::curl_fetch_memory(url)
+  if(req$status_code == 404){
+    return(character())
+  }
+  if(req$status_code > 400){
+    stop(sprintf("HTTP %d (%s)", req$status_code, url))
+  }
+  jsonlite::fromJSON(rawToChar(req$content))
 }
 
 trigger_rebuild <- function(repository, pkg){
