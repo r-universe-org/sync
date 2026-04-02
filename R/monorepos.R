@@ -229,7 +229,12 @@ update_one_package <- function(x, update_pkg_remotes = FALSE, cleanup_after = FA
   submodule <- sys::exec_internal("git", c("submodule", "status", pkg_dir), error = FALSE)
   if(submodule$status != 0){
     print_message("Adding new package '%s' from: %s", pkg_dir, pkg_url)
-    git_cmd_assert("submodule", "add", "--force", pkg_url, pkg_dir)
+    tryCatch(git_cmd_assert("submodule", "add", "--force", pkg_url, pkg_dir), error = function(e){
+      # This happens when the repo is empty (e.g. from cran mirror)
+      unlink(pkg_dir, recursive = TRUE)
+      gert::git_reset_hard()
+      stop(e)
+    })
     if(pkg_branch == '*release')
       pkg_branch <- update_release_branch(pkg_dir, pkg_url)
     if(pkg_branch != 'HEAD'){
