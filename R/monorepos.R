@@ -870,9 +870,9 @@ metacran_dummy_registry <- function(archived_days = 60, skip = 'request'){
   on.exit(unlink(tmp))
   curl::curl_download('https://cloud.r-project.org/web/packages/packages.rds', destfile = tmp)
   cran <- as.data.frame(readRDS(tmp), stringsAsFactors = FALSE)
-  winonly <- which(cran$OS_type == 'windows')
-  if(length(winonly)){
-    cran <- cran[-winonly,]
+  exclude <- which(cran$OS_type == 'windows' | cran$Path == 'Transit')
+  if(length(exclude)){
+    cran <- cran[-exclude,]
   }
   #archived <- read.csv('https://r-universe-org.github.io/cran-to-git/archived.csv')
   archived <- cran_archived_db()
