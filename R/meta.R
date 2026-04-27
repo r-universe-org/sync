@@ -25,6 +25,10 @@ trigger_syncs <- function(){
 }
 
 check_and_trigger <- function(universe){
+  if(format(Sys.time(), format = '%S') == '00'){
+    # once per minute, more or less
+    check_github_status()
+  }
   try({
     dirty <- needs_update(universe)
     if(length(dirty)){
