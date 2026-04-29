@@ -110,7 +110,8 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   print_message("Submodules up-to-date: %d", length(skiplist))
   dirty <- Filter(function(x){is.na(match(x$package, skiplist))}, registry[!registry_dups])
   use_remotes <- identical(basename(gert::git_submodule_info(".registry")$url), "cran-to-git") && !grepl('^bioc', monorepo_name)
-  results1 <- lapply(dirty, try_update_package, update_pkg_remotes = use_remotes)
+  delay <- ifelse(length(dirty) > 30, 30, 0) #Avoid long backlogs for big updates
+  results1 <- lapply(dirty, try_update_package, update_pkg_remotes = use_remotes, delay = delay)
 
   if(use_remotes){
     print_message("Checking remotes list...")
@@ -197,11 +198,12 @@ set_registry_commit_status <- function(monorepo_url, success){
   }
 }
 
-try_update_package <- function(x, ...){
+try_update_package <- function(x, ..., delay = 0){
   tryCatch(update_one_package(x = x, ...), error = function(e){
     gert::git_reset_hard()
     cat("ERROR", e$message, '\n', file = stderr())
     structure(x, class = 'update_failure', error = e$message)
+    Sys.sleep(delay)
   })
 }
 
