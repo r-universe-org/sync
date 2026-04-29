@@ -62,15 +62,18 @@ remote_heads_many <- function(repos, refs = NULL, verbose = TRUE){
   len <- length(repos)
   out <- rep(NA_character_, len)
   completed <- 0
-  lapply(seq_len(len), function(i){
-    k <- i
-    url <- sprintf('%s/info/refs?service=git-upload-pack', repos[i])
-    ref <- ifelse(length(refs) && !is.na(refs[i]), refs[i], "HEAD")
+  lapply(seq_len(len), function(ii){
+    k <- ii
+    if(is.na(repos[k])) {
+      return()
+    }
+    url <- sprintf('%s/info/refs?service=git-upload-pack', repos[k])
+    ref <- ifelse(length(refs) && !is.na(refs[k]), refs[k], "HEAD")
     h <- make_handle(url)
     curl::multi_add(handle = h, done = function(res){
       txt <- tryCatch(parse_raw_gitpack(res$content), error = function(...){})
       if(!length(txt)){
-        message("Failed to get HEAD ref: ", repos[i])
+        message("Failed to get HEAD ref: ", repos[k])
         return()
       }
       pattern <- ifelse(ref=='HEAD', 'HEAD$', sprintf("\\/%s$", ref))
