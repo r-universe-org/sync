@@ -960,7 +960,7 @@ universe_ls <- function(universe){
   if(req$status_code == 404){
     return(character())
   }
-  if(req$status_code > 400){
+  if(req$status_code >= 400){
     stop(sprintf("HTTP %d (%s)", req$status_code, url))
   }
   jsonlite::fromJSON(rawToChar(req$content))
