@@ -202,8 +202,8 @@ try_update_package <- function(x, ..., delay = 0){
   tryCatch(update_one_package(x = x, ...), error = function(e){
     gert::git_reset_hard()
     cat("ERROR", e$message, '\n', file = stderr())
-    structure(x, class = 'update_failure', error = e$message)
     Sys.sleep(delay)
+    structure(x, class = 'update_failure', error = e$message)
   })
 }
 
