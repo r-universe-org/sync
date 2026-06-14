@@ -57,7 +57,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   }
 
   # Sync with the user registry file (currently libgit2 does not support shallow clones, sadly)
-  res <- sys::exec_wait("git", c("submodule", "update", "--init", "--remote", '.registry'))
+  res <- sys::exec_wait("git", c("submodule", "update", "--init", "--depth", "1", "--remote", '.registry'))
 
   # If this fails, check if the personal registry still exists
   if(res != 0 || !file.exists('.registry/packages.json')){
@@ -234,7 +234,7 @@ update_one_package <- function(x, update_pkg_remotes = FALSE){
   submodule <- sys::exec_internal("git", c("submodule", "status", pkg_dir), error = FALSE)
   if(submodule$status != 0){
     print_message("Adding new package '%s' from: %s", pkg_dir, pkg_url)
-    tryCatch(git_cmd_assert("submodule", "add", "--force", pkg_url, pkg_dir), error = function(e){
+    tryCatch(git_cmd_assert("submodule", "add", "--depth", "1", "--force", pkg_url, pkg_dir), error = function(e){
       # This happens when the repo is empty (e.g. from cran mirror)
       unlink(pkg_dir, recursive = TRUE)
       gert::git_reset_hard()
@@ -243,6 +243,9 @@ update_one_package <- function(x, update_pkg_remotes = FALSE){
     if(pkg_branch == '*release')
       pkg_branch <- update_release_branch(pkg_dir, pkg_url)
     if(pkg_branch != 'HEAD'){
+      # When using --depth 1 we might not get the branches we need so fetch it
+      gert::git_fetch(refspec = sprintf("%s:refs/remotes/origin/%s", pkg_branch, pkg_branch), repo = pkg_dir)
+
       # Branch names need to be disambiguated with 'origin/' in gert
       origin_branches <- gert::git_branch_list(local = FALSE, repo = pkg_dir)$name
       full_ref <- paste0('origin/', pkg_branch)
@@ -277,7 +280,7 @@ update_one_package <- function(x, update_pkg_remotes = FALSE){
     }
     print_message("Updating package '%s' from: %s", pkg_dir, pkg_url)
     git_cmd_assert("update-index", "--cacheinfo", "160000", remote_head, pkg_dir)
-    git_cmd_assert("submodule", "update", "--init", pkg_dir)
+    git_cmd_assert("submodule", "update", "--init", "--depth", "1", pkg_dir)
   }
   gert::git_add(pkg_dir)
   if(!any(gert::git_status()$staged)){
