@@ -198,7 +198,10 @@ set_registry_commit_status <- function(monorepo_url, success){
   }
 }
 
-try_update_package <- function(x, ..., delay = 0){
+try_update_package <- function(x, ..., delay = 0, cleanup_after = TRUE){
+  if(cleanup_after){
+    on.exit(cleanup_submodule(x$package), add = TRUE)
+  }
   tryCatch(update_one_package(x = x, ...), error = function(e){
     gert::git_reset_hard()
     cat("ERROR", e$message, '\n', file = stderr())
@@ -217,7 +220,7 @@ delete_one_package <- function(pkg_dir){
 }
 
 # Sync the registry packages with the monorepo
-update_one_package <- function(x, update_pkg_remotes = FALSE, cleanup_after = FALSE){
+update_one_package <- function(x, update_pkg_remotes = FALSE){
   pkg_dir <- x$package
   if(grepl("/", pkg_dir)){
     stop("Package name should not contain slashes: ", pkg_dir)
@@ -274,7 +277,6 @@ update_one_package <- function(x, update_pkg_remotes = FALSE, cleanup_after = FA
     }
     print_message("Updating package '%s' from: %s", pkg_dir, pkg_url)
     git_cmd_assert("update-index", "--cacheinfo", "160000", remote_head, pkg_dir)
-
     git_cmd_assert("submodule", "update", "--init", pkg_dir)
   }
   gert::git_add(pkg_dir)
@@ -309,9 +311,14 @@ update_one_package <- function(x, update_pkg_remotes = FALSE, cleanup_after = FA
     gert::git_commit(message = paste(desc$package, desc$version),
                      author = sig, committer = committer)
     gert::git_push(verbose = TRUE)
-    if(cleanup_after){
-      sys::exec_wait("git", c("submodule", "deinit", pkg_dir), std_out = FALSE)
-    }
+  }
+}
+
+cleanup_submodule <- function(pkg_dir){
+  module_dir <- file.path('.git/modules', pkg_dir)
+  if(file.exists(module_dir)){
+    sys::exec_wait("git", c("submodule", "deinit", pkg_dir), std_out = FALSE)
+    system2("rm", c("-Rf", module_dir))
   }
 }
 
