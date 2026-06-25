@@ -507,7 +507,7 @@ normalize_git_url <- function(url){
 }
 
 update_gitmodules <- function(){
-  registry <- lapply(read_registry_list(), function(x){c(x, registered = TRUE)})
+  registry <- lapply(read_registry_list(), function(x){c(x, registered = !isTRUE(x$noindex))})
   remotes <- lapply(read_remotes_list(), function(x){c(x, registered = FALSE)})
   registry_url <- gert::git_remote_list(repo = I('.registry'))$url
   pkgs <- c(list(list(
