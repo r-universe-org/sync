@@ -559,7 +559,8 @@ read_description_file <- function(path){
     authors <- desc[['authors@r']]
     if(length(authors)){
       maintainer <- tryCatch(find_maintainer_safe(authors), error = function(e){
-        stop(sprintf("Failed to parse Authors@R for package '%s': %s", desc$package, e$message))
+        warning(sprintf("Failed to parse Authors@R for package '%s': %s", desc$package, e$message))
+        return('Invalid DESCRIPTION <Authors@R.error>')
       })
       desc$maintainer <- as.character(maintainer)
     }
