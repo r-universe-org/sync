@@ -343,6 +343,9 @@ normalize_maintainer <- function(x){
     return(x)
   }
   person$email <- normalize_email(person$email)
+  if(!length(person$given) && !length(person$family)){
+    person$given <- "nobody"
+  }
   format(person, include = c("given", "family", "email"))
 }
 
