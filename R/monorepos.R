@@ -596,6 +596,7 @@ find_maintainer_safe <- function(authors){
   maintainer <- utils:::.format_authors_at_R_field_for_maintainer(aar)
   if(length(maintainer) && nchar(maintainer))
     return(c(maintainer = maintainer))
+  stop("No maintainer found in author list")
 }
 
 write_metadata_json <- function(){
