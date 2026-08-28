@@ -776,7 +776,8 @@ is_valid_registry <- function(repo_name){
     return(TRUE)
   }
   pkgsurl <- sprintf('https://raw.githubusercontent.com/%s/HEAD/packages.json', repo_name)
-  success <- curl::curl_fetch_memory(pkgsurl)$status_code == 200
+  req <- curl::curl_fetch_memory(pkgsurl)
+  success <- req$status_code == 200 && length(req$content)
   print_message("Checking if a registry exists at %s: %s", repo_name, ifelse(success, 'yes', "no"))
   return(success && validate_registry_repo(repo_name))
 }
