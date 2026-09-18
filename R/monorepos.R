@@ -504,7 +504,9 @@ read_registry_list <- function(){
 # Should we tolowercase here?
 # I think git urls could be case sensitive?
 normalize_git_url <- function(url){
-  url <- sub("\\.git$", "", url)
+  if(grepl('github|gitlab|codeberg', url)){
+    url <- sub("\\.git$", "", url)
+  }
   url <- sub("/$", "", url)
   trimws(url)
 }
