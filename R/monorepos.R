@@ -924,13 +924,19 @@ cran_archived_db <- function(){
   db[order(db$Package),c("Package", "Date", "Reason")]
 }
 
+bioc_pkgs <- function(bioc_version){
+  unlist(lapply(c("bioc", "data/experiment", "workflows"), function(x)
+    jsonlite::read_json(sprintf('https://bioconductor.org/packages/json/%s/%s/packages.json', bioc_version, x))
+  ), recursive = FALSE)
+}
+
 # Same list as 'cranscraper'
 metabioc_devel_registry <- function(){
   nomirror <- c('SwathXtend', 'h5vc', 'scafari', 'singIST') # large git files
   skiplist <- c('IntOMICS') # package was renamed bc trademarks
   yml <- yaml::read_yaml("https://bioconductor.org/config.yaml")
   bioc_version <- yml$devel_version
-  bioc <- jsonlite::read_json(sprintf('https://bioconductor.org/packages/json/%s/bioc/packages.json', bioc_version))
+  bioc <- bioc_pkgs(bioc_version)
   stopifnot(length(bioc) > 2100)
   #bioc <- Filter(function(x) !identical(x$PackageStatus, 'Deprecated'), bioc)
   lapply(setdiff(names(bioc), skiplist), function(x){
@@ -943,7 +949,7 @@ metabioc_release_registry <- function(){
   nomirror <- c('SwathXtend', 'h5vc', 'scafari', 'singIST') # large git files
   yml <- yaml::read_yaml("https://bioconductor.org/config.yaml")
   bioc_version <- yml$release_version
-  bioc <- jsonlite::read_json(sprintf('https://bioconductor.org/packages/json/%s/bioc/packages.json', bioc_version))
+  bioc <- bioc_pkgs(bioc_version)
   stopifnot(length(bioc) > 2100)
   #bioc <- Filter(function(x) !identical(x$PackageStatus, 'Deprecated'), bioc)
   release_branch <- paste0("RELEASE_", sub("\\.", "_", bioc_version))
