@@ -823,6 +823,9 @@ update_registry_repo <- function(monorepo_name, current_registry){
   if(monorepo_name == 'ropensci-champions'){
     return('ropensci/champions-program')
   }
+  if(monorepo_name == 'bioc'){
+    return('bioc/manifest')
+  }
   personal_registry_repos <- c(
     sprintf('%s/%s.r-universe.dev', monorepo_name, monorepo_name))
   for(x in personal_registry_repos){
