@@ -151,9 +151,12 @@ bioc_skiplist <- function(release = FALSE){
 bioc_recent_updates <- function(days = 14, release = FALSE){
   yml <- yaml::read_yaml("https://bioconductor.org/config.yaml")
   version <- ifelse(release, yml$release_version, yml$devel_version)
-  bioc <- jsonlite::read_json(sprintf('https://bioconductor.org/packages/json/%s/bioc/packages.json', version))
-  stopifnot(length(bioc) > 2100)
-  dates <- as.Date(vapply(bioc, function(x) as.character(x$git_last_commit_date)[1], character(1)))
+  bioc <- jsonlite::read_json(sprintf('https://bioconductor.posit.co/packages/json/%s/bioc/packages.json', version))
+  workflows <- jsonlite::read_json(sprintf('https://bioconductor.posit.co/packages/json/%s/workflows/packages.json', version))
+  experiment <- jsonlite::read_json(sprintf('https://bioconductor.posit.co/packages/json/%s/data/experiment/packages.json', version))
+  packages <- c(bioc, workflows, experiment)
+  stopifnot(length(packages) > 2100)
+  dates <- as.Date(vapply(packages, function(x) as.character(x$git_last_commit_date)[1], character(1)))
   names(which(Sys.Date()-dates < days))
 }
 
