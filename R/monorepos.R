@@ -56,6 +56,13 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
     update_registry_repo(monorepo_name, current_registry)
   }
 
+  # needed for bioc-release
+  if(monorepo_name == 'bioc-release') {
+    res <- sys::exec_wait("git", c("submodule", "update", "--init", "--remote", '.registry'))
+  } else {
+    res <- sys::exec_wait("git", c("submodule", "update", "--init", "--depth", "1", "--remote", '.registry'))
+  }
+
   # Sync with the user registry file (currently libgit2 does not support shallow clones, sadly)
   res <- sys::exec_wait("git", c("submodule", "update", "--init", "--depth", "1", "--remote", '.registry'))
 
@@ -479,9 +486,13 @@ print_message <- function(...){
   message(paste(sprintf(...), collapse = '\n'))
 }
 
-read_registry_list <- function(){
+current_universe <- function(){
   monorepo_url <- gert::git_remote_info()$url
-  universe <- sub("_", "@", basename(monorepo_url), fixed = TRUE)
+  sub("_", "@", basename(monorepo_url), fixed = TRUE)
+}
+
+read_registry_list <- function(){
+  universe <- current_universe()
   if(universe == 'cran'){
     return(metacran_dummy_registry())
   }
@@ -518,7 +529,7 @@ update_gitmodules <- function(){
   pkgs <- c(list(list(
     package = '.registry',
     url = registry_url,
-    branch = 'HEAD' #git assumes 'master' otherwise!
+    branch = ifelse(identical(current_universe(), 'bioc-release'), bioc_release_branch(), 'HEAD') #git assumes 'master' otherwise!
   )), registry, remotes)
   pkgs_names <- vapply(pkgs, function(x){x$package}, character(1))
   pkgs <- pkgs[!duplicated(pkgs_names)]
@@ -823,7 +834,7 @@ update_registry_repo <- function(monorepo_name, current_registry){
   if(monorepo_name == 'ropensci-champions'){
     return('ropensci/champions-program')
   }
-  if(monorepo_name == 'bioc'){
+  if(monorepo_name == 'bioc' || monorepo_name == 'bioc-release'){
     return('bioc/manifest')
   }
   personal_registry_repos <- c(
@@ -944,13 +955,24 @@ metabioc_release_registry <- function(){
   bioc <- jsonlite::read_json(sprintf('https://bioconductor.org/packages/json/%s/bioc/packages.json', bioc_version))
   stopifnot(length(bioc) > 2100)
   #bioc <- Filter(function(x) !identical(x$PackageStatus, 'Deprecated'), bioc)
-  release_branch <- paste0("RELEASE_", sub("\\.", "_", bioc_version))
+  release_branch <- bioc_release_branch()
   lapply(bioc, function(pkginfo){
     x <- pkginfo$Package
     baseurl <- ifelse(x %in% nomirror, "https://git.bioconductor.org/packages/", "https://github.com/bioc/")
     list(package = x, url = paste0(baseurl, x), branch = release_branch)
   })
 }
+
+bioc_release_branch <- local({
+  out <- NULL
+  function() {
+    if(is.null(out)){
+      yml <- yaml::read_yaml("https://bioconductor.org/config.yaml")
+      out <<- paste0("RELEASE_", sub("\\.", "_", yml$release_version))
+    }
+    return(out)
+  }
+})
 
 metabioc_ignored <- function(){
   src <- parse(url('https://raw.githubusercontent.com/r-hub/biocatgh/refs/heads/main/R/list.R'))
