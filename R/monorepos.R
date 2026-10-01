@@ -486,7 +486,7 @@ read_registry_list <- function(){
     return(metacran_dummy_registry())
   }
   if(universe == 'bioc'){
-    return(metabioc_devel_registry())
+    return(bioc_manifest_packages())
   }
   if(universe == 'bioc-release'){
     return(metabioc_release_registry())
@@ -924,16 +924,14 @@ cran_archived_db <- function(){
   db[order(db$Package),c("Package", "Date", "Reason")]
 }
 
-# Same list as 'cranscraper'
-metabioc_devel_registry <- function(){
+bioc_manifest_packages <- function(){
   nomirror <- c('SwathXtend', 'h5vc', 'scafari', 'singIST') # large git files
   skiplist <- c('IntOMICS') # package was renamed bc trademarks
-  yml <- yaml::read_yaml("https://bioconductor.org/config.yaml")
-  bioc_version <- yml$devel_version
-  bioc <- jsonlite::read_json(sprintf('https://bioconductor.org/packages/json/%s/bioc/packages.json', bioc_version))
-  stopifnot(length(bioc) > 2100)
-  #bioc <- Filter(function(x) !identical(x$PackageStatus, 'Deprecated'), bioc)
-  lapply(setdiff(names(bioc), skiplist), function(x){
+  software <- read.dcf('.registry/software.txt')[,'Package']
+  workflows <- read.dcf('.registry/workflows.txt')[,'Package']
+  packages <- c(software, workflows)
+  stopifnot(length(packages) > 2100)
+  lapply(setdiff(packages, skiplist), function(x){
     baseurl <- ifelse(x %in% nomirror, "https://git.bioconductor.org/packages/", "https://github.com/bioc/")
     list(package = x, url = paste0(baseurl, x ))
   })
