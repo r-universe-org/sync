@@ -925,7 +925,7 @@ cran_archived_db <- function(){
 }
 
 bioc_manifest_packages <- function(){
-  nomirror <- c('SwathXtend', 'h5vc', 'scafari', 'singIST') # large git files
+  nomirror <- metabioc_ignored() # large git files
   skiplist <- c('IntOMICS') # package was renamed bc trademarks
   software <- read.dcf('.registry/software.txt')[,'Package']
   workflows <- read.dcf('.registry/workflows.txt')[,'Package']
@@ -938,7 +938,7 @@ bioc_manifest_packages <- function(){
 }
 
 metabioc_release_registry <- function(){
-  nomirror <- c('SwathXtend', 'h5vc', 'scafari', 'singIST') # large git files
+  nomirror <- metabioc_ignored() # large git files
   yml <- yaml::read_yaml("https://bioconductor.org/config.yaml")
   bioc_version <- yml$release_version
   bioc <- jsonlite::read_json(sprintf('https://bioconductor.org/packages/json/%s/bioc/packages.json', bioc_version))
@@ -950,6 +950,13 @@ metabioc_release_registry <- function(){
     baseurl <- ifelse(x %in% nomirror, "https://git.bioconductor.org/packages/", "https://github.com/bioc/")
     list(package = x, url = paste0(baseurl, x), branch = release_branch)
   })
+}
+
+metabioc_ignored <- function(){
+  src <- parse(url('https://raw.githubusercontent.com/r-hub/biocatgh/refs/heads/main/R/list.R'))
+  env <- new.env()
+  eval(src, envir = env)
+  env$ignored
 }
 
 rebuild_missing <- function(monorepo_name){
