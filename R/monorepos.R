@@ -551,6 +551,8 @@ update_gitmodules <- function(){
     }
     if(length(x$subdir))
       str <- paste0(str, '\n\tsubdir = ', x$subdir[1])
+    if(length(x$type))
+      str <- paste0(str, '\n\ttype = ', x$type[1])
     if(x$package != '.registry' && isFALSE(x$registered))
       str <- paste0(str, '\n\tregistered = false')
     return(str)
@@ -940,11 +942,14 @@ bioc_manifest_packages <- function(){
   skiplist <- c('IntOMICS') # package was renamed bc trademarks
   software <- read.dcf('.registry/software.txt')[,'Package']
   workflows <- read.dcf('.registry/workflows.txt')[,'Package']
-  packages <- c(software, workflows)
+  experiment <- read.dcf('.registry/data-experiment.txt')[,'Package']
+  #datapkgs <- c(experiment)
+  datapkgs <- c('affydata', 'PCHiCdata')
+  packages <- c(software, workflows, datapkgs)
   stopifnot(length(packages) > 2100)
   lapply(setdiff(packages, skiplist), function(x){
     baseurl <- ifelse(x %in% nomirror, "https://git.bioconductor.org/packages/", "https://github.com/bioc/")
-    list(package = x, url = paste0(baseurl, x ))
+    list(package = x, url = paste0(baseurl, x ), type = if(x %in% datapkgs) 'data')
   })
 }
 
