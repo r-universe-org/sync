@@ -943,8 +943,7 @@ bioc_manifest_packages <- function(){
   software <- read.dcf('.registry/software.txt')[,'Package']
   workflows <- read.dcf('.registry/workflows.txt')[,'Package']
   experiment <- read.dcf('.registry/data-experiment.txt')[,'Package']
-  #datapkgs <- c(experiment)
-  datapkgs <- c('affydata', 'PCHiCdata')
+  datapkgs <- c(experiment)
   packages <- c(software, workflows, datapkgs)
   stopifnot(length(packages) > 2100)
   lapply(setdiff(packages, skiplist), function(x){
