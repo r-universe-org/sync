@@ -126,10 +126,7 @@ cran_recent_updates <- function(days = 1){
 }
 
 bioc_skiplist <- function(release = FALSE){
-  yml <- yaml::read_yaml("https://bioconductor.org/config.yaml")
-  version <- ifelse(release, yml$release_version, yml$devel_version)
-  bioc_url <- sprintf('https://bioconductor.org/packages/json/%s/bioc/packages.json', version)
-  bioc <- jsonlite::read_json(bioc_url)
+  bioc <- bioc_metadata(release = release)
   stopifnot(length(bioc) > 2100)
   submodules <- gert::git_submodule_list()
   bioc <- Filter(function(info){
@@ -144,20 +141,25 @@ bioc_skiplist <- function(release = FALSE){
     }
     !isTRUE(grepl(info$git_last_commit, current, fixed = TRUE))
   }, bioc)
-  message(sprintf("Found %d packages out of sync with: %s", length(bioc), bioc_url))
+  message(sprintf("Found %d packages out of sync with bioc metadata", length(bioc)))
   names(bioc)
 }
 
 bioc_recent_updates <- function(days = 14, release = FALSE){
-  yml <- yaml::read_yaml("https://bioconductor.org/config.yaml")
+  packages <- bioc_metadata(release = release)
+  dates <- as.Date(vapply(packages, function(x) as.character(x$git_last_commit_date)[1], character(1)))
+  names(which(Sys.Date()-dates < days))
+}
+
+bioc_metadata <- function(release = FALSE){
+  yml <- yaml::read_yaml("https://bioconductor.posit.co/config.yaml")
   version <- ifelse(release, yml$release_version, yml$devel_version)
   bioc <- jsonlite::read_json(sprintf('https://bioconductor.posit.co/packages/json/%s/bioc/packages.json', version))
   workflows <- jsonlite::read_json(sprintf('https://bioconductor.posit.co/packages/json/%s/workflows/packages.json', version))
   experiment <- jsonlite::read_json(sprintf('https://bioconductor.posit.co/packages/json/%s/data/experiment/packages.json', version))
   packages <- c(bioc, workflows, experiment)
   stopifnot(length(packages) > 2100)
-  dates <- as.Date(vapply(packages, function(x) as.character(x$git_last_commit_date)[1], character(1)))
-  names(which(Sys.Date()-dates < days))
+  return(packages)
 }
 
 github_recent_updates <- function(org = 'cran', max = 100){

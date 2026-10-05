@@ -967,7 +967,7 @@ bioc_release_branch <- local({
   out <- NULL
   function() {
     if(is.null(out)){
-      yml <- yaml::read_yaml("https://bioconductor.org/config.yaml")
+      yml <- yaml::read_yaml("https://bioconductor.posit.co/config.yaml")
       out <<- paste0("RELEASE_", sub("\\.", "_", yml$release_version))
     }
     return(out)
