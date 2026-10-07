@@ -9,7 +9,7 @@ check_github_status <- function(services = c('Packages', 'Actions', 'API Request
 
 check_cloudflare_status <- function(){
   status <- jsonlite::fromJSON('https://www.cloudflarestatus.com/api/v2/status.json')$status$indicator
-  if(status %in% c('major', 'critical')){
+  if(status %in% c('critical')){
     stop("Cloudflare problems. Not proceeding")
   }
 }
