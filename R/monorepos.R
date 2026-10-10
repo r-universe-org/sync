@@ -949,7 +949,8 @@ bioc_manifest_packages <- function(){
   software <- read.dcf('.registry/software.txt')[,'Package']
   workflows <- read.dcf('.registry/workflows.txt')[,'Package']
   experiment <- read.dcf('.registry/data-experiment.txt')[,'Package']
-  datapkgs <- c(experiment)
+  books <- read.dcf('.registry/books.txt')[,'Package']
+  datapkgs <- c(experiment, books)
   packages <- c(software, workflows, datapkgs)
   stopifnot(length(packages) > 2100)
   branch <- if(current_universe() == 'bioc-release') bioc_release_branch()
