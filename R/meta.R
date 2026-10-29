@@ -151,12 +151,17 @@ bioc_recent_updates <- function(days = 14, release = FALSE){
   names(which(Sys.Date()-dates < days))
 }
 
+bioc_mirror <- function(){
+  sub("/+$", "", Sys.getenv('R_BIOC_MIRROR', 'https://bioconductor.org'))
+}
+
 bioc_metadata <- function(release = FALSE){
-  yml <- yaml::read_yaml("https://bioconductor.posit.co/config.yaml")
+  mirror <- bioc_mirror()
+  yml <- yaml::read_yaml(paste0(mirror, "/config.yaml"))
   version <- ifelse(release, yml$release_version, yml$devel_version)
-  bioc <- jsonlite::read_json(sprintf('https://bioconductor.posit.co/packages/json/%s/bioc/packages.json', version))
-  workflows <- jsonlite::read_json(sprintf('https://bioconductor.posit.co/packages/json/%s/workflows/packages.json', version))
-  experiment <- jsonlite::read_json(sprintf('https://bioconductor.posit.co/packages/json/%s/data/experiment/packages.json', version))
+  bioc <- jsonlite::read_json(sprintf('%s/packages/json/%s/bioc/packages.json', mirror, version))
+  workflows <- jsonlite::read_json(sprintf('%s/packages/json/%s/workflows/packages.json', mirror, version))
+  experiment <- jsonlite::read_json(sprintf('%s/packages/json/%s/data/experiment/packages.json', mirror, version))
   packages <- c(bioc, workflows, experiment)
   stopifnot(length(packages) > 2100)
   return(packages)
