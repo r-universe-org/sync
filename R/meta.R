@@ -47,7 +47,7 @@ needs_update <- function(universe){
     return(github_last_update('cran', 3))
   }
   if(universe == 'bioc' || universe == 'bioc-release'){
-    return(github_last_update('bioc', 3))
+    return(github_last_update('bioc', 12))
   }
   retry(git_clone(paste0('https://github.com/r-universe/', universe)))
   fullpath <- normalizePath(universe)
