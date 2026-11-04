@@ -44,7 +44,7 @@ check_and_trigger <- function(universe){
 needs_update <- function(universe){
   # Do not do full scan huge repos
   if(universe == 'cran'){
-    return(github_last_update('cran', 3))
+    return(github_last_update('cran', 12))
   }
   if(universe == 'bioc' || universe == 'bioc-release'){
     return(github_last_update('bioc', 12))
