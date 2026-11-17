@@ -969,7 +969,7 @@ bioc_release_branch <- local({
   function() {
     if(is.null(out)){
       yml <- yaml::read_yaml(paste0(bioc_mirror(), "/config.yaml"))
-      out <<- paste0("RELEASE_", sub("\\.", "_", yml$release_version))
+      out <<- paste0("RELEASE_", sub("\\.", "_", yml$r_universe_release_version))
     }
     return(out)
   }
