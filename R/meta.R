@@ -158,7 +158,7 @@ bioc_mirror <- function(){
 bioc_metadata <- function(release = FALSE){
   mirror <- bioc_mirror()
   yml <- yaml::read_yaml(paste0(mirror, "/config.yaml"))
-  version <- ifelse(release, yml$release_version, yml$devel_version)
+  version <- ifelse(release, yml$r_universe_release_version, yml$r_universe_devel_version)
   bioc <- jsonlite::read_json(sprintf('%s/packages/json/%s/bioc/packages.json', mirror, version))
   workflows <- jsonlite::read_json(sprintf('%s/packages/json/%s/workflows/packages.json', mirror, version))
   experiment <- jsonlite::read_json(sprintf('%s/packages/json/%s/data/experiment/packages.json', mirror, version))
