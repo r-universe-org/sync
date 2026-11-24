@@ -167,6 +167,29 @@ bioc_metadata <- function(release = FALSE){
   return(packages)
 }
 
+# Push packages with many reverse dependencies first, such that core packages are
+# built first when many packages change at once (e.g. a bioc mass version bump)
+sort_by_revdeps <- function(registry, universe){
+  if(length(registry) < 2){
+    return(registry)
+  }
+  usedby <- tryCatch({
+    url <- sprintf('https://%s.r-universe.dev/api/packages?fields=_usedby&limit=50000', universe)
+    df <- jsonlite::fromJSON(url)
+    structure(df[['_usedby']], names = df$Package)
+  }, error = function(e){
+    message("Failed to get reverse dependencies: ", e$message)
+    NULL
+  })
+  if(!length(usedby)){
+    return(registry)
+  }
+  pkgs <- vapply(registry, function(x){x$package}, character(1))
+  n <- unname(usedby[pkgs])
+  n[is.na(n)] <- 0
+  registry[order(n, decreasing = TRUE)]
+}
+
 github_recent_updates <- function(org = 'cran', max = 100){
   repos <- gh::gh("/orgs/{org}/repos", sort='pushed', per_page = max, org = org)
   vapply(repos, function(x) x$name, character(1))

@@ -116,6 +116,7 @@ sync_from_registry <- function(monorepo_url = Sys.getenv('MONOREPO_URL')){
   skiplist <- submodules_up_to_date(skip_broken = FALSE, filter_packages = make_filter_list(monorepo_name))
   print_message("Submodules up-to-date: %d", length(skiplist))
   dirty <- Filter(function(x){is.na(match(x$package, skiplist))}, registry[!registry_dups])
+  dirty <- sort_by_revdeps(dirty, monorepo_name)
   use_remotes <- identical(basename(gert::git_submodule_info(".registry")$url), "cran-to-git") && !grepl('^bioc', monorepo_name)
   delay <- ifelse(length(dirty) > 30, 30, 0) #Avoid long backlogs for big updates
   results1 <- lapply(dirty, try_update_package, update_pkg_remotes = use_remotes, delay = delay)
