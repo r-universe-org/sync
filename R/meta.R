@@ -129,6 +129,8 @@ bioc_skiplist <- function(release = FALSE){
   bioc <- bioc_metadata(release = release)
   stopifnot(length(bioc) > 2100)
   submodules <- gert::git_submodule_list()
+  # Packages without metadata (e.g. books) are always checked
+  unknown <- setdiff(submodules$name, c(names(bioc), '.registry'))
   bioc <- Filter(function(info){
     if(!length(info$git_last_commit)) {
       message("Missing git_last_commit for ", info$Package)
@@ -142,7 +144,7 @@ bioc_skiplist <- function(release = FALSE){
     !isTRUE(grepl(info$git_last_commit, current, fixed = TRUE))
   }, bioc)
   message(sprintf("Found %d packages out of sync with bioc metadata", length(bioc)))
-  names(bioc)
+  c(names(bioc), unknown)
 }
 
 bioc_recent_updates <- function(days = 14, release = FALSE){
