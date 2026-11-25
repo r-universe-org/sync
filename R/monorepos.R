@@ -989,10 +989,16 @@ rebuild_missing <- function(monorepo_name){
   if(length(missings)){
     message("Missing source packages: ", paste(missings, collapse = ', '))
     filestats <- gert::git_stat_files(missings, max = 200)
+    active <- tryCatch(active_builds(monorepo_name), error = function(e){
+      message("Failed to list active builds: ", e$message)
+      character()
+    })
     lapply(missings, function(pkg){
       mtime <- filestats[filestats$file == pkg, ]$modified
-      if(isTRUE(difftime(Sys.time(), mtime, units = 'hours') < 48)){
+      if(isTRUE(difftime(Sys.time(), mtime, units = 'hours') < 12)){
         message("Skipping recently added package ", pkg)
+      } else if(pkg %in% active){
+        message("Skipping package with a build in progress ", pkg)
       } else {
         try(trigger_rebuild(monorepo_name, pkg))
       }
@@ -1021,6 +1027,17 @@ trigger_rebuild <- function(repository, pkg){
   url <- sprintf('/repos/r-universe/%s/actions/workflows/build.yml/dispatches', repository)
   inputs <- list(package = pkg, reason = 'sync missing')
   gh::gh(url, .method = 'POST', ref = 'master', inputs = inputs)
+}
+
+# Packages with a queued or running build. Run titles start with the package name:
+# either "pkg (reason)" for dispatches or the "pkg version" commit message for pushes.
+active_builds <- function(repository){
+  url <- sprintf('/repos/r-universe/%s/actions/workflows/build.yml/runs', repository)
+  titles <- unlist(lapply(c('queued', 'in_progress'), function(status){
+    res <- gh::gh(url, status = status, per_page = 100, .limit = 10000, .progress = FALSE)
+    vapply(res$workflow_runs, function(x) x$display_title, character(1))
+  }))
+  unique(sub(" .*", "", titles))
 }
 
 trigger_cleanup <- function(repository){
