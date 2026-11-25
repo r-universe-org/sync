@@ -991,8 +991,8 @@ rebuild_missing <- function(monorepo_name){
     filestats <- gert::git_stat_files(missings, max = 200)
     lapply(missings, function(pkg){
       mtime <- filestats[filestats$file == pkg, ]$modified
-      if(isTRUE(difftime(Sys.time(), mtime, units = 'hours') < 2)){
-        message("Skipping newly added package ", pkg)
+      if(isTRUE(difftime(Sys.time(), mtime, units = 'hours') < 48)){
+        message("Skipping recently added package ", pkg)
       } else {
         try(trigger_rebuild(monorepo_name, pkg))
       }
@@ -1019,7 +1019,8 @@ universe_ls <- function(universe){
 trigger_rebuild <- function(repository, pkg){
   cat(sprintf("Rebuilding %s/%s\n", repository, pkg))
   url <- sprintf('/repos/r-universe/%s/actions/workflows/build.yml/dispatches', repository)
-  gh::gh(url, .method = 'POST', ref = 'master', inputs = list(package = pkg))
+  inputs <- list(package = pkg, reason = 'sync missing')
+  gh::gh(url, .method = 'POST', ref = 'master', inputs = inputs)
 }
 
 trigger_cleanup <- function(repository){
